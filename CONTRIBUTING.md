@@ -25,6 +25,67 @@ history. The [source/notice inventory](docs/GUIDANCE-REVIEW.md) and
 [license review](LICENSE-REVIEW.md) explain the newly shipped guidance. Reassess
 provenance and include actual upstream notices for any new external material.
 
+## Open an issue
+
+You do not need to know Graph's internal labels or run Codex to participate.
+
+1. Check the [existing issues](https://github.com/Vezryn-LLC/graph-community/issues)
+   and [pull requests](https://github.com/Vezryn-LLC/graph-community/pulls)
+   to avoid duplicates.
+2. Choose **New issue** from the Issues tab, or
+   [open a new issue](https://github.com/Vezryn-LLC/graph-community/issues/new).
+3. Write a short, descriptive title and explain the problem or improvement.
+   Submit when it has enough context to understand the request.
+
+For a **bug report**, include:
+
+- Expected and actual behavior.
+- Steps/commands to reproduce the bug, ideally in a disposable repository.
+- Graph Community version/commit, OS, Python and native Codex CLI versions.
+- Relevant *redacted* errors or logs and whether the problem repeats.
+
+For a **feature request**, explain the problem, current workflow, desired
+outcome and why it would help. Concrete examples are welcome; submitting
+a request is not a promise to implement or release it.
+
+**Security vulnerabilities:** Do not post exploit details, credentials
+or private repository contents in public. Use the confidential route in
+[SECURITY.md](SECURITY.md).
+
+**Issue labels are maintainer-controlled.** Opening an issue does not
+enqueue an AI agent. Authorized maintainers decide whether and when to mark
+an eligible issue `status:ready` after assessing scope, dependencies and
+permissions. Contributors do not need to assign Graph-specific labels.
+
+## Submit a pull request
+
+Small documentation fixes can go straight to a PR. For a substantial behavior
+change, please check or open an issue first so you don't duplicate work.
+
+1. **Fork** [Graph Community](https://github.com/Vezryn-LLC/graph-community)
+   using GitHub's Fork button if you do not have write access. Clone your fork,
+   or use GitHub's web editor for simple documentation updates.
+2. **Create a branch** from current `main`, such as
+   `fix/clearer-startup-message`. Keep each PR focused on one change.
+3. **Make and verify the change.** Follow the engineering guidance above.
+   Update affected docs/tests. Refresh `MANIFEST.json` for any payload edits;
+   update the approved positive file allowlist in `ci/check.py` when adding
+   new paths. Run `python3 -B ci/check.py` and relevant focused checks.
+   State anything you could not verify.
+4. **Push your branch.** On GitHub, select **Contribute → Open pull request**
+   (or open the Pull requests tab). Confirm that the base is
+   `Vezryn-LLC/graph-community:main` and the comparison is your branch.
+   Review the diff before submitting.
+5. **Describe your PR**: problem, changed behavior/files, how you tested,
+   any platform limitations and the related issue. Use `Fixes #123` only
+   when merging would genuinely resolve that issue. Draft PRs are welcome
+   for unfinished contributions.
+6. **Respond to feedback** in the PR conversation. Maintainers decide when
+   a change is merged; merging does not automatically publish a release.
+
+Please keep user data, credentials, private histories and sensitive logs out
+of public issues and PRs.
+
 ## Release preparation
 
 Keep v0.1.0 and its artifacts immutable. This follow-up targets v0.1.1 and prepares
