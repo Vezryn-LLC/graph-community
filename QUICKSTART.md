@@ -1,9 +1,9 @@
-# Beginner quickstart (private evaluation)
+# Beginner quickstart
 
-Use only an authorized disposable private workspace. This source includes
-[Apache-2.0](LICENSE), but has no published installer, public repository,
-model account, or authentication flow. Keep the original manifest/source
-pristine and copy it into a separate runtime directory before trying commands.
+Graph Community is public at `Vezryn-LLC/graph-community` under [Apache-2.0](LICENSE).
+Start with a repository you control and no production data. Keep manifest-verified
+source separate from stateful runtime trials; the local check needs no accounts.
+Native Codex/GitHub installation, authentication and permissions remain yours.
 
 ## Prerequisites
 
@@ -56,17 +56,28 @@ A passing smoke proves only the operations named in its output.
 Use an authorized disposable PRIVATE test repository with no production data;
 reuse an existing qualification repository when appropriate rather than creating
 a duplicate. Read
-AGENTS.md and policies first. In that test repo create `status:ready`,
-`status:in-progress`, `status:awaiting-merge`, `status:blocked` labels using normal
-GitHub tools; make one bounded test issue ready. Verify no competing claim.
-If the client requires source Git trust, use only fresh private Git history as
-in IMPORT.md, never the original repository's objects/remotes.
+[AGENTS.md](AGENTS.md) and the [default library](docs/LIBRARY.md) first.
+Create the four mandatory lifecycle labels, replacing `example/project` with the
+repository you control (these commands intentionally create/update labels):
+
+```sh
+gh label create 'status:ready' --repo example/project --color 238636 --description 'Eligible for Graph selection' --force
+gh label create 'status:in-progress' --repo example/project --color 0969DA --description 'Claimed by a worker' --force
+gh label create 'status:awaiting-merge' --repo example/project --color 8250DF --description 'Implementation awaits PR disposition' --force
+gh label create 'status:blocked' --repo example/project --color D93F0B --description 'Unmet dependency or authority gate' --force
+```
+
+Create one bounded real issue, mark it ready only when actionable, and verify no
+competing claim/PR or unresolved dependency. Enrollment alone does not make all
+issues executable. Use the existing independent public source history; never
+import private producer objects, refs or runtime state (see [IMPORT.md](IMPORT.md)).
 
 Linux foreground trial (substitute the authorized owner/repository):
 
 ```sh
 python3 -B watcher.py repo add example/project
 python3 -B watcher.py repo list
+python3 -B watcher.py library
 python3 -B watcher.py watch --once
 ```
 

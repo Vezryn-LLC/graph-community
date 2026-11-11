@@ -1,9 +1,12 @@
 # Graph Community coordinator
 
 Explicitly assigned workers finish their original assignment; they do not start
-another backlog campaign. Coordinators read the effective ISSUE_SELECTION,
-ISSUE_LIFECYCLE and ENGINEERING policies before selecting work. Resolve paths
-with `python3 watcher.py library`; replacement and disable markers are authoritative
+another backlog campaign. Coordinators read the effective policies before selecting
+work: [ISSUE_SELECTION](policies/ISSUE_SELECTION.md),
+[ISSUE_LIFECYCLE](policies/ISSUE_LIFECYCLE.md),
+[ENGINEERING](policies/ENGINEERING.md), [MODEL_ROUTING](policies/MODEL_ROUTING.md),
+[ROUTING_MATRIX](policies/ROUTING_MATRIX.md) and [DELEGATION](policies/DELEGATION.md).
+Resolve paths with `python3 watcher.py library`; replacement and disable markers are authoritative
 for this library. Native/global/project instructions and user authority still apply.
 
 Use native Codex and GitHub tools. Inspect complete original issues and comments;
