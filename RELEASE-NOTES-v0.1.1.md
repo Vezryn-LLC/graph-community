@@ -1,27 +1,33 @@
-# Graph Community v0.1.1 — proposed library update
+# Graph Community v0.1.1
 
-A fresh install now offers 22 engineering playbooks, 10 skills and six policies
-for actual feature, bug, prototype, documentation, research, integration, PR repair,
-validation and recovery work. Native Codex selects one useful route and passes its
-literal instructions to workers. Model/effort guidance uses actual client/account
-capabilities, configured defaults and supported fallback; no private model IDs or
-new routing engine are included.
+## Changes
 
-[The library guide](docs/LIBRARY.md) explains shipped defaults, replacements and
-`.disabled` precedence. [The inventory](docs/GUIDANCE-REVIEW.md) records source
-selection, exclusions and notice review. Onboarding now names the public repository,
-creates all four lifecycle labels, shows enrollment and warns that `watch --once`
-is live. Package checks include the reviewed positive allowlist, manifest/modes,
-known private markers, independent history when present, local doc links and
-focused resolution/literal-handoff regressions.
+- Restore 22 engineering playbooks, 10 skills and six policies, with native task, model and reasoning guidance and editable library overrides.
+- Add readable future claims with public-safe worktree fields, truthful unknown attribution and private source-custody preservation.
+- Explain public issue reports and pull requests, maintainer-controlled readiness and contributor verification.
 
-The watcher, launcher, ownership/locks, lifecycle engine, platform adapters and
-source-update behavior are unchanged. This does not extend native platform/client
-qualification. Keep the [existing platform limits](PLATFORMS.md), including manual
-Windows startup, unqualified Windows/Linux reboot boundaries and unavailable
-source activation. Tests use local synthetic state and fake handoff clients;
-no hosted account, live model, native-hook or new platform trial is claimed.
+## Getting started
 
-Apache-2.0 and security@vezryn.com are unchanged. v0.1.0 remains immutable.
-These notes describe a reviewable proposed v0.1.1 source update, not a tag,
-artifact publication or release authorization.
+Read the [quickstart](https://github.com/Vezryn-LLC/graph-community/blob/v0.1.1/QUICKSTART.md),
+[platform limits](https://github.com/Vezryn-LLC/graph-community/blob/v0.1.1/PLATFORMS.md)
+and [contributor instructions](https://github.com/Vezryn-LLC/graph-community/blob/v0.1.1/CONTRIBUTING.md).
+The [library guide](https://github.com/Vezryn-LLC/graph-community/blob/v0.1.1/docs/LIBRARY.md)
+documents shipped defaults, replacements and disabled-marker precedence.
+
+## Verification and limits
+
+The release retains the independent public Git history and a positive payload
+allowlist, file hashes/modes, private-marker checks, documentation-link checks,
+local guidance/claim regressions and account-free runtime primitive smoke.
+MANIFEST.json describes the payload; SHA256SUMS covers the release archives and
+manifest. Neither is a signature or a grant of account access.
+
+Runtime, launcher, locks, lifecycle, platform adapters and source-update behavior
+are unchanged by this update. Existing bounded platform observations remain the
+limits: Windows startup is manual, Windows/Linux reboot recovery is unqualified,
+source activation is unavailable and native hooks require client qualification.
+Local checks do not establish new native platform, hosted account, live model or
+Claude Code support. No private-product parity is claimed.
+
+Apache-2.0 and security@vezryn.com are unchanged. The v0.1.0 tag, release notes
+and published artifacts remain immutable.

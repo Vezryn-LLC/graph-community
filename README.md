@@ -7,8 +7,8 @@ normal GitHub pull requests. Editable generic Markdown supplies the workflow.
 
 Graph Community is public at `Vezryn-LLC/graph-community`, licensed under
 [Apache-2.0](LICENSE). The immutable [v0.1.0 release](https://github.com/Vezryn-LLC/graph-community/releases/tag/v0.1.0)
-is the baseline. This branch prepares a focused v0.1.1 library update; it does
-not publish that release. No account, repository permission, model entitlement
+is the baseline. v0.1.1 adds the engineering library, readable public-safe claims
+and contributor instructions. No account, repository permission, model entitlement
 or trusted client capability is bundled.
 
 Start with [the beginner quickstart](QUICKSTART.md), then read [platform support
@@ -17,7 +17,7 @@ and limits](PLATFORMS.md), [architecture](ARCHITECTURE.md) and the generic
 [CI example](ci/smoke.yml.example) describe qualification, not promised support.
 [Contributing](CONTRIBUTING.md), [security reporting](SECURITY.md),
 [independent-history rules](IMPORT.md), the historical
-[v0.1.0 notes](RELEASE-NOTES-v0.1.0.md) and proposed
+[v0.1.0 notes](RELEASE-NOTES-v0.1.0.md) and
 [v0.1.1 notes](RELEASE-NOTES-v0.1.1.md) describe the source and release boundaries.
 The default [engineering library](docs/LIBRARY.md) contains 22 playbooks, 10 skills
 and six policies; see its [inventory and source review](docs/GUIDANCE-REVIEW.md).
