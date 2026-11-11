@@ -18,7 +18,7 @@
     },
     "CONTRIBUTING.md": {
       "mode": "0o644",
-      "sha256": "cfe8bbc46fdac4ef8670169ff4e513d893a44d9987d04734b62377259d5f0916"
+      "sha256": "805d43d6c57770e9127df14779b181402192892f832c68d1da8ea9110d59c068"
     },
     "IMPORT.md": {
       "mode": "0o644",
@@ -42,7 +42,7 @@
     },
     "README.md": {
       "mode": "0o644",
-      "sha256": "0b337987d55eba15e3593b999d09b5d0ab62e8737049ef6b424c39a7a006f473"
+      "sha256": "16d52f070f4a5680d4a0f392f1c8f35818667e49413f5a74a82df20db9a53add"
     },
     "RELEASE-NOTES-v0.1.0.md": {
       "mode": "0o644",
@@ -50,7 +50,7 @@
     },
     "RELEASE-NOTES-v0.1.1.md": {
       "mode": "0o644",
-      "sha256": "ca9045c8983114b4d76b8e6a62f59db4bab19458340baa7fd94eb8e21a08450d"
+      "sha256": "c11c70c180897d9190ead5d5f2a4aa64a6c7784287ab65da949611bc4cc37380"
     },
     "SECURITY.md": {
       "mode": "0o644",

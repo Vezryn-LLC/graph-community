@@ -88,9 +88,8 @@ of public issues and PRs.
 
 ## Release preparation
 
-Keep v0.1.0 and its artifacts immutable. This follow-up targets v0.1.1 and prepares
-one reviewable library update. A merged PR is not release authorization. Record
-exact source/manifest identity, changed behavior and applicable evidence before
+Keep existing releases and their artifacts immutable. A merged PR is not release
+authorization. Record exact source/manifest identity, changed behavior and applicable evidence before
 an owner-authorized tag/release. Source activation remains unavailable.
 
 Reuse valid native platform evidence when contracts are unchanged; do not replay
