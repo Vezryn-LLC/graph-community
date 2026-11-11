@@ -1,15 +1,14 @@
-# License compatibility review — Apache-2.0 private candidate
+# License and notice review — Apache-2.0
 
-The founder selected Apache License 2.0 and confirmed that Vezryn and its AI
-coding agents developed Graph Community without known outside contributions.
-The unmodified [Apache-2.0 LICENSE](LICENSE) was merged in Community PR #6
-and is included in MANIFEST.json. This does not authorize public visibility,
-a release or a tag.
+Graph Community is public under the unmodified [Apache-2.0 LICENSE](LICENSE),
+included in MANIFEST.json. The owner represented first-party development without
+known outside contributions for the original release. This review records source
+and notice findings; it does not authorize a new release or tag.
 
 The scoped review of the original 28-file candidate found no substantial copied
 pstack text or other specific third-party notice-bearing implementation in the
-shipped payload. The public pstack source is MIT-licensed, but the private
-historical import filenames are unknown and private guidance is not shipped.
+shipped payload. The public pstack source is MIT-licensed. The original release
+did not ship the maintained source guidance; the new additions are reviewed separately below.
 No separate NOTICE is indicated by the reviewed contents. Preserve any
 applicable upstream copyright and license notices if future versions include
 third-party material.
@@ -39,16 +38,40 @@ snippets/generated inputs and contributor rights, including the native API code.
 
 This is a scoped source assessment, not a legal opinion. The private report
 retains provenance evidence without shipping private Git history, credentials,
-operator logs or personal account data. Final publication still needs an
-approved public repository identity and explicit publication authority.
+operator logs or personal account data. The public repository is established;
+each new release still requires reviewed source and explicit release authority.
 
 ## v0.1.0 disposition
 
 The reviewed candidate includes Apache-2.0, and no specific third-party NOTICE
-obligation was identified. Founder first-party development representation was
-recorded on Graph #128. No further provenance hunt is required solely because
-earlier private pstack import filenames are unknown.
+obligation was identified. The initial release used the owner
+first-party development representation and its scoped payload review. That review
+does not establish provenance or notice compliance for newly added guidance.
 
 Reassess third-party obligations when source or contributors change. The
 confidential reporting route is verified separately in SECURITY.md. No public
 release is authorized solely by this license review.
+
+## v0.1.1 guidance additions
+
+The [complete source inventory](docs/GUIDANCE-REVIEW.md) classifies all 31 source
+playbooks, 23 skills and seven policies. This payload selects 22 engineering
+playbooks and 10 engineering skills, retains three Community policies and adapts
+three generic coordinator policies. Creative/product profiles and experimental
+planning are excluded. Private source instructions, model IDs, Git ancestry,
+research and operational evidence are not exported.
+
+The newly selected text was inspected against retained pstack source and its MIT
+license, not just assumed covered by the 28-file review. No substantial copied
+pstack passage or other specific notice-bearing external material was identified
+in these additions. Generic concepts such as minimal implementation, focused
+verification and source custody do not by themselves identify copied expression.
+No additional MIT/other notice is indicated by this selected content. If future
+changes do include external text, preserve its actual author copyright and full
+permission/license notice; Apache-2.0 does not erase upstream obligations.
+
+Attribution for the selected engineering guidance: Vezryn Graph contributors.
+Community adaptations retain the generic method and remove private operational
+references. Source lineage and comparison evidence are retained privately outside
+the payload. This bounded source assessment does not certify legal title or
+unknown external inputs and does not extend to excluded creative material.
