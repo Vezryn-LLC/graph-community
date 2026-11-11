@@ -1,0 +1,122 @@
+{
+  "files": {
+    ".codex/hooks.json": {
+      "mode": "0o644",
+      "sha256": "5e77c4fd6fc16de439e07e1538c8be460a5a07bbd1e5aa6b942b5fa10d68bb4e"
+    },
+    ".codex/hooks/lifecycle.py": {
+      "mode": "0o644",
+      "sha256": "17728e7c9d54e7788c037594271349662c5c1db36463ef56dcabd7149db14fae"
+    },
+    "AGENTS.md": {
+      "mode": "0o644",
+      "sha256": "66a9a13da801329d7f7e1ce63b16428fbe05645e042ecfb529810f2c69230af9"
+    },
+    "ARCHITECTURE.md": {
+      "mode": "0o644",
+      "sha256": "958a9a07820bc03c371e562a74fe45cf611acbb9e156367bae722b53cd245c5f"
+    },
+    "CONTRIBUTING.md": {
+      "mode": "0o644",
+      "sha256": "706dd99213216302f2fdce0e13e9da88af15ec8d9405c9f5c9b0733edb0a4f2e"
+    },
+    "IMPORT.md": {
+      "mode": "0o644",
+      "sha256": "3bb949956e00569b2602df1ec833df8d0b5d59e16a2349bd7d3981e57123eaba"
+    },
+    "LICENSE": {
+      "mode": "0o644",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    "LICENSE-REVIEW.md": {
+      "mode": "0o644",
+      "sha256": "dbe64e19ba963e9e9594ea563eaad5ed8aafbe58bb4b973599f2faf9f576644d"
+    },
+    "PLATFORMS.md": {
+      "mode": "0o644",
+      "sha256": "76604d807d6b761564ea3a8040697e8f010ba071f417766cfc592608118ee384"
+    },
+    "QUICKSTART.md": {
+      "mode": "0o644",
+      "sha256": "4e82282fda061c54338d5506997ce3f8c90749c4b9b01ff92d68457004073a6e"
+    },
+    "README.md": {
+      "mode": "0o644",
+      "sha256": "73d840210087f73f63e6a3017227812f32e87a25df883cd81f2089564cdafe9a"
+    },
+    "RELEASE-NOTES-v0.1.0.md": {
+      "mode": "0o644",
+      "sha256": "d73978dbd7906ce0e099e2fd6ed298e7c4888684481e81f8e64a4712b6a2066d"
+    },
+    "SECURITY.md": {
+      "mode": "0o644",
+      "sha256": "9aeb725bfc8ff68ed750e50a8eb4c9d9650f59f9ccbff3bc2d96037682fc4b64"
+    },
+    "SMOKE-MATRIX.md": {
+      "mode": "0o644",
+      "sha256": "46276ba28154d7d6c616dad7b8be1b4fb21c73649a169580ab2c7c15b061e06e"
+    },
+    "bin/graph": {
+      "mode": "0o755",
+      "sha256": "31363acaa2fbea1e6dab2cf4ca3814fa25018adbeda93956c250090ed2e4bcbe"
+    },
+    "ci/check.py": {
+      "mode": "0o644",
+      "sha256": "379929814ff67ccf4bbeed285467c4c6e65bac41fcdac4fcb78de2791142961c"
+    },
+    "ci/smoke.yml.example": {
+      "mode": "0o644",
+      "sha256": "b6c451f85e59e0d6502b58b5cab2f6b0de7c8ba649a5f8effb73f9d16300beb3"
+    },
+    "graph_macos.py": {
+      "mode": "0o755",
+      "sha256": "05c9254a632a130a489b6fd0125bddc1f3c401bdbc43484fc3bc29578cf53f5c"
+    },
+    "graph_platform.py": {
+      "mode": "0o644",
+      "sha256": "5754a9d259b9d52240c519cf48eceec97ec1a3c253d2d80b7c17bf4bb15a7703"
+    },
+    "graph_update.py": {
+      "mode": "0o644",
+      "sha256": "0827227f1e4db56a727da86d64fe11f373d4ad1d74c72651fe4de16b4384a04f"
+    },
+    "graph_windows.py": {
+      "mode": "0o644",
+      "sha256": "aafa2dad45388067b393aadce9619d082cacaaa41f3e639b6efd1cae3e22bb9e"
+    },
+    "graph_windows_native.py": {
+      "mode": "0o644",
+      "sha256": "66cf56e9a9e05b6827fe0aec1adc59dbf3af9c203d13c8a0d27e7813235b23c3"
+    },
+    "library.py": {
+      "mode": "0o644",
+      "sha256": "1d44e227297435be4823ad551310200552c220826a0f8b29c98c59b050a4363c"
+    },
+    "playbooks/deliver.md": {
+      "mode": "0o644",
+      "sha256": "a5c5a22426080f6ab4205e4ce11ec58c7eabcdd46601f1df1f396b1645a59792"
+    },
+    "policies/ENGINEERING.md": {
+      "mode": "0o644",
+      "sha256": "a0c404088b654b5408df74eb2857988a748d589879fe88171ffffa9931fc911b"
+    },
+    "policies/ISSUE_LIFECYCLE.md": {
+      "mode": "0o644",
+      "sha256": "e876bc0a8629c1433233e19b1214e70d66906e60ade97d3dc4f39ea0ce489f1f"
+    },
+    "policies/ISSUE_SELECTION.md": {
+      "mode": "0o644",
+      "sha256": "75372a77e4b49088f9896d861cde8417e0e64b93b9d0340dcb2e637b401a4d5a"
+    },
+    "smoke.py": {
+      "mode": "0o755",
+      "sha256": "7bdc2fa57802a96dd74f9e1860664a63685832fb365f807ef7e481cdf442b9b5"
+    },
+    "watcher.py": {
+      "mode": "0o644",
+      "sha256": "6dd7bf2599f74f4dac86ecc15c6d8309b3e7381e898ac074bc2d000debc453fb"
+    }
+  },
+  "package": "graph-community-private-preflight",
+  "schema_version": 1
+}

@@ -1,0 +1,57 @@
+{
+  "description": "Advisory coordinator and subagent guidance; no tool guards or automatic review loops.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "^(startup|resume|clear|compact)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${VEZRYN_GRAPH_PYTHON:-python3}\" \"${VEZRYN_GRAPH_ROOT:?Graph root must be set}/.codex/hooks/lifecycle.py\"",
+            "timeout": 5,
+            "additionalContextLimit": 1200,
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& (Get-Item Env:VEZRYN_GRAPH_PYTHON -ErrorAction Stop).Value (Join-Path (Get-Item Env:VEZRYN_GRAPH_ROOT -ErrorAction Stop).Value '.codex/hooks/lifecycle.py'); exit (Get-Variable LASTEXITCODE -ValueOnly)\""
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${VEZRYN_GRAPH_PYTHON:-python3}\" \"${VEZRYN_GRAPH_ROOT:?Graph root must be set}/.codex/hooks/lifecycle.py\"",
+            "timeout": 5,
+            "additionalContextLimit": 1500,
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& (Get-Item Env:VEZRYN_GRAPH_PYTHON -ErrorAction Stop).Value (Join-Path (Get-Item Env:VEZRYN_GRAPH_ROOT -ErrorAction Stop).Value '.codex/hooks/lifecycle.py'); exit (Get-Variable LASTEXITCODE -ValueOnly)\""
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${VEZRYN_GRAPH_PYTHON:-python3}\" \"${VEZRYN_GRAPH_ROOT:?Graph root must be set}/.codex/hooks/lifecycle.py\"",
+            "timeout": 5,
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& (Get-Item Env:VEZRYN_GRAPH_PYTHON -ErrorAction Stop).Value (Join-Path (Get-Item Env:VEZRYN_GRAPH_ROOT -ErrorAction Stop).Value '.codex/hooks/lifecycle.py'); exit (Get-Variable LASTEXITCODE -ValueOnly)\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "spawn_agent|Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${VEZRYN_GRAPH_PYTHON:-python3}\" \"${VEZRYN_GRAPH_ROOT:?Graph root must be set}/.codex/hooks/lifecycle.py\"",
+            "timeout": 15,
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& (Get-Item Env:VEZRYN_GRAPH_PYTHON -ErrorAction Stop).Value (Join-Path (Get-Item Env:VEZRYN_GRAPH_ROOT -ErrorAction Stop).Value '.codex/hooks/lifecycle.py'); exit (Get-Variable LASTEXITCODE -ValueOnly)\""
+          }
+        ]
+      }
+    ]
+  }
+}

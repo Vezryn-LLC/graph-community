@@ -1,0 +1,31 @@
+# INERT TEMPLATE: review billing/access and pin actions before deliberate activation.
+name: Community local smoke
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            arch: x86_64
+          - os: macos-15
+            arch: arm64
+          - os: windows-2025
+            arch: AMD64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 5
+    env:
+      EXPECT_ARCH: ${{ matrix.arch }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -B ci/check.py

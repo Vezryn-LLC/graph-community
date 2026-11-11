@@ -1,0 +1,275 @@
+#!/usr/bin/env bash
+# Simple user-level control. Stop is graceful and never kills active Codex.
+set -euo pipefail
+
+SOURCE="$(readlink -f -- "${BASH_SOURCE[0]}")"
+ROOT="$(cd -- "$(dirname -- "$SOURCE")/.." && pwd -P)"
+UNIT="graph-community.service"
+STATE="${VEZRYN_GRAPH_STATE:-$HOME/.local/state/graph-community}"
+STOP="$STATE/stop-request"
+
+usage() {
+  echo 'Usage: graph {install|uninstall|start|stop|status|logs|repo|capabilities|version|check-update|apply-update}'
+  echo 'stop: cease new dispatch; let any in-flight coordinator finish'
+  echo 'version/check-update/apply-update: --json; status: --details'
+}
+active() { systemctl --user is-active --quiet "$UNIT"; }
+
+case "${1:-}" in
+  install|uninstall|start)
+    [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+    exec /usr/bin/python3 -B - "$ROOT" "$SOURCE" "$1" <<'PY'
+"""Embedded Linux package lifecycle. No shell evaluation or data deletion."""
+import fcntl
+import os
+from pathlib import Path
+import re
+import shutil
+import stat
+import subprocess
+import sys
+import tempfile
+
+ROOT, SOURCE, ACTION = sys.argv[1:]
+HOME = Path.home()
+UNIT = 'graph-community.service'
+UNIT_PATH = HOME / '.config/systemd/user' / UNIT
+BIN = HOME / '.local/bin/graph'
+STATE = Path(os.environ.get('VEZRYN_GRAPH_STATE', HOME / '.local/state/graph-community'))
+STOP = STATE / 'stop-request'
+
+
+def quote(value):
+    # systemd.syntax quoting + specifier escaping. ExecStart uses ':' to disable
+    # dollar environment substitution; Environment= does not do it.
+    if any(ord(c) < 32 or ord(c) == 127 or 0xD800 <= ord(c) <= 0xDFFF for c in value):
+        raise RuntimeError('Unsupported control character or undecodable path/environment')
+    return '"' + value.replace('\\', '\\\\').replace('"', '\\"').replace('%', '%%') + '"'
+
+
+def unit_text(path):
+    return ('[Unit]\nDescription=Graph Community GitHub issue watcher\n\n[Service]\n'
+            'Type=simple\nWorkingDirectory=' + ROOT.replace('%', '%%') + '\nEnvironment=' + quote('PATH=' + path) +
+            '\nExecStart=:/usr/bin/python3 -u ' + quote(ROOT + '/watcher.py') + ' watch\nRestart=no\n')
+
+
+def snapshot(path):
+    try:
+        info = path.lstat()
+    except FileNotFoundError:
+        return None
+    if stat.S_ISLNK(info.st_mode):
+        return ('link', os.readlink(path))
+    if stat.S_ISREG(info.st_mode) and info.st_nlink == 1:
+        return ('file', path.read_bytes(), stat.S_IMODE(info.st_mode))
+    raise RuntimeError('Refusing special or hardlinked file: ' + str(path))
+
+
+def owned_unit(value):
+    if value is None:
+        return True
+    if value[0] != 'file':
+        return False
+    text = value[1].decode('utf-8')
+    # Reinstall accepts a different previous PATH only when the entire remaining
+    # unit is exactly this source's generated service. No extra directives.
+    lines = text.splitlines(keepends=True)
+    env = next((line for line in lines if line.startswith('Environment=')), '')
+    if not re.fullmatch(r'Environment="PATH=(?:[^"\\\n]|\\["\\])*"\n', env):
+        return False
+    current = unit_text(os.environ['PATH'])
+    expected_env = next(line for line in current.splitlines(keepends=True) if line.startswith('Environment='))
+    if text == current.replace(expected_env, env):
+        return True
+    # Exact previously shipped Linux unit: migration, including its unquoted
+    # whitespace defect. A matching CLI alone never establishes unit ownership.
+    legacy = ('[Unit]\nDescription=Graph Community GitHub issue watcher\n\n[Service]\n'
+              'Type=simple\nWorkingDirectory=' + ROOT + '\n' + env +
+              'ExecStart=/usr/bin/python3 -u ' + ROOT + '/watcher.py watch\nRestart=no\n')
+    return text == legacy
+
+
+def manager():
+    result = subprocess.run(['systemctl', '--user', 'show', UNIT,
+        '--property=LoadState', '--property=FragmentPath', '--property=DropInPaths',
+        '--property=ActiveState', '--property=MainPID', '--property=TasksCurrent',
+        '--property=UnitFileState'], text=True, capture_output=True, timeout=30)
+    values = dict(line.split('=', 1) for line in result.stdout.splitlines() if '=' in line)
+    if result.returncode and not (result.returncode == 4 and values.get('LoadState') == 'not-found'):
+        raise RuntimeError('Cannot inspect user manager: ' + result.stderr.strip())
+    if values.get('LoadState') not in ('loaded', 'not-found'):
+        raise RuntimeError('Unknown user manager unit state')
+    fragment = values.get('FragmentPath', '')
+    if (values.get('LoadState') == 'loaded' or fragment) and fragment != str(UNIT_PATH):
+        raise RuntimeError('Refusing nonowned manager fragment: ' + fragment)
+    if values.get('DropInPaths') or values.get('UnitFileState') in ('enabled', 'enabled-runtime', 'linked', 'linked-runtime', 'alias', 'masked', 'masked-runtime'):
+        raise RuntimeError('Refusing manager overrides or startup links; preserve/reconcile them explicitly')
+    return values
+
+
+def ctl(*args):
+    result = subprocess.run(['systemctl', '--user', *args], text=True, capture_output=True, timeout=30)
+    if result.returncode:
+        raise RuntimeError('systemctl ' + ' '.join(args) + ' failed: ' + result.stderr.strip())
+
+
+def directories(path):
+    # Never follow a user-install ancestor symlink into unrelated service state.
+    for item in reversed((path, *path.parents)):
+        if item.exists() or item.is_symlink():
+            if not stat.S_ISDIR(item.lstat().st_mode):
+                raise RuntimeError('Refusing non-directory installation ancestor: ' + str(item))
+        else:
+            item.mkdir(mode=0o700)
+
+
+def replace(path, value):
+    if value is None:
+        path.unlink()
+        return
+    fd, name = tempfile.mkstemp(prefix='.graph-install-', dir=path.parent)
+    temporary = Path(name)
+    try:
+        if value[0] == 'file':
+            with os.fdopen(fd, 'wb') as output:
+                output.write(value[1])
+            temporary.chmod(value[2])
+        else:
+            os.close(fd)
+            temporary.unlink()
+            temporary.symlink_to(value[1])
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def main():
+    for value in (ROOT, SOURCE, str(HOME), os.environ.get('PATH', '')):
+        quote(value)  # Validate before creating any installation file.
+    # WorkingDirectory= takes a literal path, not a quoted word list. Unit-file
+    # trailing whitespace/continuations cannot represent these paths safely.
+    if ROOT[-1].isspace() or ROOT.endswith('\\'):
+        raise RuntimeError('Unsupported trailing whitespace or backslash in source path')
+    for tool, diagnostic in (('systemctl', 'Requires systemd user services'),
+                             ('gh', 'GitHub CLI (gh) not on PATH'), ('codex', 'Codex CLI not on PATH')):
+        if (ACTION == 'install' or tool == 'systemctl') and not shutil.which(tool):
+            raise RuntimeError(diagnostic)
+    directories(STATE)
+    with os.fdopen(os.open(STATE / 'update.lock', os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600), 'r+') as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise RuntimeError('Graph activation in progress; refresh before changing service state')
+        for directory in (UNIT_PATH.parent, BIN.parent):
+            directories(directory)
+        before = {path: snapshot(path) for path in (UNIT_PATH, BIN)}
+        if not owned_unit(before[UNIT_PATH]) or before[BIN] not in (None, ('link', SOURCE)):
+            raise RuntimeError('Refusing to change nonowned unit or CLI installation')
+        status = manager()
+        if ACTION == 'start':
+            if before[UNIT_PATH] is None:
+                raise RuntimeError('Install this source before starting its service')
+            marker = snapshot(STOP)
+            if marker is not None and marker[0] != 'file':
+                raise RuntimeError('Refusing nonregular stop marker')
+            if marker is not None:
+                STOP.unlink()
+            try:
+                if status.get('ActiveState') != 'active':
+                    ctl('start', UNIT)
+                if manager().get('ActiveState') != 'active':
+                    raise RuntimeError('Manager did not confirm an active watcher')
+            except (RuntimeError, OSError, subprocess.TimeoutExpired):
+                if marker is not None and snapshot(STOP) is None:
+                    replace(STOP, marker)
+                raise
+            print('Graph watcher started. Use: graph status')
+            return
+        if status.get('ActiveState') not in ('inactive', 'failed') or status.get('MainPID', '0') != '0' or status.get('TasksCurrent', '0') not in ('0', '[not set]'):
+            raise RuntimeError('Service is active or unverified; graph stop and wait for a verified drain first')
+        desired = ({UNIT_PATH: ('file', unit_text(os.environ['PATH']).encode(), 0o644), BIN: ('link', SOURCE)}
+                   if ACTION == 'install' else {UNIT_PATH: None, BIN: None})
+        changed = []
+        try:
+            for path, value in desired.items():
+                if value != before[path]:
+                    if snapshot(path) != before[path]:
+                        raise RuntimeError('Installation changed concurrently: ' + str(path))
+                    replace(path, value)
+                    changed.append(path)
+            ctl('daemon-reload')
+            loaded = manager()['LoadState']
+            if loaded != ('loaded' if ACTION == 'install' else 'not-found'):
+                raise RuntimeError('Manager did not confirm the requested installation state')
+        except (RuntimeError, OSError, subprocess.TimeoutExpired) as error:
+            rollback = []
+            for path in reversed(changed):
+                try:
+                    if snapshot(path) != desired[path]:
+                        raise RuntimeError('changed concurrently; preserved')
+                    replace(path, before[path])
+                except (RuntimeError, OSError) as failure:
+                    rollback.append(str(path) + ': ' + str(failure))
+            try:
+                ctl('daemon-reload')
+            except (RuntimeError, OSError, subprocess.TimeoutExpired) as failure:
+                rollback.append('manager reload remains unverified: ' + str(failure))
+            raise RuntimeError(str(error) + '; owned file changes rolled back' +
+                               ('; rollback incomplete: ' + '; '.join(rollback) if rollback else ''))
+        print(('Installed service and CLI (not started or enabled).' if ACTION == 'install' else
+               'Uninstalled service and CLI. Package source and all configuration, state, journals, claims and worktrees preserved.'))
+
+
+try:
+    main()
+except (RuntimeError, OSError, ValueError, subprocess.TimeoutExpired) as error:
+    print(str(error), file=sys.stderr)
+    raise SystemExit(1)
+
+PY
+    ;;
+  stop)
+    if active; then
+      mkdir -p "$STATE"
+      touch "$STOP"
+      echo "Graph stopping: no new issues will be dispatched."
+      echo "Any in-flight Codex coordinator finishes before the watcher exits."
+    else
+      echo "Graph is already stopped."
+    fi
+    ;;
+  status)
+    [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = "--details" ]; } || { usage >&2; exit 2; }
+    if active; then
+      if [ -e "$STOP" ]; then
+        echo "Graph: stopping (draining active coordinator, if any)"
+      else
+        echo "Graph: running"
+      fi
+    else
+      echo "Graph: stopped"
+    fi
+    /usr/bin/python3 "$ROOT/watcher.py" "$@"
+    ;;
+  capabilities)
+    [ "$#" -eq 1 ] || { usage >&2; exit 2; }
+    exec /usr/bin/python3 "$ROOT/graph_platform.py"
+    ;;
+  version|check-update|apply-update)
+    exec /usr/bin/python3 -B "$ROOT/graph_update.py" "$@"
+    ;;
+  logs)
+    exec journalctl --user -u "$UNIT" --no-pager -n 40 -f
+    ;;
+  repo)
+    shift
+    exec /usr/bin/python3 "$ROOT/watcher.py" repo "$@"
+    ;;
+  -h|--help|help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac
