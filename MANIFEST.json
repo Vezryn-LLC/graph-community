@@ -194,11 +194,11 @@
     },
     "playbooks/worktree-retirement.md": {
       "mode": "0o644",
-      "sha256": "27ecc999e242ec7a0da162e947fd3f4116f96f5e028f8798b3d0fd53c076d93d"
+      "sha256": "492e8768d04060683e498e3098412196570a8a682bd7c81e6348624ba20f3e5d"
     },
     "policies/DELEGATION.md": {
       "mode": "0o644",
-      "sha256": "d0bea3938b8bf15a41244f5fb047e40a9516d6059b44e6295336a64395cba09e"
+      "sha256": "34f9558ba6ef0ac427a2e87c813016b954e62b00feaa972fdd4a9d59a37dedaf"
     },
     "policies/ENGINEERING.md": {
       "mode": "0o644",
@@ -206,7 +206,7 @@
     },
     "policies/ISSUE_LIFECYCLE.md": {
       "mode": "0o644",
-      "sha256": "e876bc0a8629c1433233e19b1214e70d66906e60ade97d3dc4f39ea0ce489f1f"
+      "sha256": "d8d26265cf7118ea46fd0a3d241bec50131c56b3ddfad29dd6b8b6385a368775"
     },
     "policies/ISSUE_SELECTION.md": {
       "mode": "0o644",
@@ -218,7 +218,7 @@
     },
     "policies/ROUTING_MATRIX.md": {
       "mode": "0o644",
-      "sha256": "ce25149ccaa0fc80aacfeb713e1268fd9f0d84ac2f7702821aa3156b3991f150"
+      "sha256": "6f575e5472da58041d11372a57d876b405946650ef89ff75a8c2876ef9f270b7"
     },
     "skills/agent-orchestration/SKILL.md": {
       "mode": "0o644",
@@ -258,7 +258,7 @@
     },
     "skills/source-custody/SKILL.md": {
       "mode": "0o644",
-      "sha256": "91a300b8d0171b617b9d41c79aaa4ebd76b5d95b98edea126c035c2f791d2afd"
+      "sha256": "0d4a36175e3961e8daa8fce515555f093a61ee7e584844491c57af3cf9e5fbc2"
     },
     "smoke.py": {
       "mode": "0o755",
