@@ -17,7 +17,12 @@ normal issue/session handoff evidence; no cleanup daemon, inventory or sweeper.
    repository, exact canonical worktree path, branch, task HEAD and worker/session
    identity to native `git worktree list --porcelain`, `git -C <path> rev-parse
    --show-toplevel`, `--git-common-dir`, `HEAD` and `--abbrev-ref HEAD`. Inspect the
-   remote identity. A prefix/name/old timestamp is not ownership. Only the exact
+   remote identity. For public-safe withheld handoffs, also read the same restricted
+   local custody record linked privately to the immutable claim URL/body/digest
+   and its retirement continuation. Use that record for exact paths, final HEAD,
+   native owner and retention evidence; never infer a path from a public alias or
+   publish private values in cleanup comments. Missing/conflicting private evidence
+   means preserve. A prefix/name/old timestamp is not ownership. Only the exact
    explicitly disposable task checkout qualifies. Conflicting or missing custody
    means preserve; never touch unrelated, main/default, protected, shared or
    manually maintained branches or the repository's primary checkout.
@@ -59,8 +64,9 @@ normal issue/session handoff evidence; no cleanup daemon, inventory or sweeper.
    other users and repository conventions permitting it. Protect default/protected
    and manually maintained branches; remote cleanup is not required for closeout.
 7. Verify actual worktree/branch postconditions. Update the existing handoff to
-   `Graph retirement complete` with the final disposition, or retain pending with
-   one actionable preservation reason and next trigger. The worker never deletes
+   `Graph retirement complete` with the final disposition (public-safe for public
+   repositories, with exact evidence retained in the same private record), or
+   retain pending with one actionable preservation reason and next trigger. The worker never deletes
    the checkout it is still using. On retries, inspect reality first: an already
    absent exact owned path/branch needs no deletion or repeated success comment.
 

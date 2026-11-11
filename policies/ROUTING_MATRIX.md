@@ -29,8 +29,11 @@ risks in [ENGINEERING.md](ENGINEERING.md); routine delivery needs no second mode
 [MODEL_ROUTING.md](MODEL_ROUTING.md) controls actual capability checks and fallback.
 These effort examples do not promise that a setting exists or fits every task.
 The coordinator records issue URL, selected/inherited configuration, one playbook,
-skills, worker name and exact worktree in the existing claim. Pass the original
-issue and literal selected guidance under [DELEGATION.md](DELEGATION.md).
+skills and worker name in the existing claim. Keep exact worktree/source custody
+in that claim for verified private repositories, or in the restricted local
+record with a public-safe withheld field under [ISSUE_LIFECYCLE.md](ISSUE_LIFECYCLE.md).
+Pass the original issue and literal selected guidance under
+[DELEGATION.md](DELEGATION.md).
 
 The default library covers engineering. Product-specific creative direction,
 design profiles and experimental multi-increment planning are not shipped. Use
