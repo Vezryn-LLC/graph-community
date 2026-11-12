@@ -180,6 +180,107 @@ def manage(action: str, repo: str | None) -> None:
     print(f"{action}: {repo} ({len(current)} enrolled)")
 
 
+LIFECYCLE_LABELS = ('status:ready', 'status:in-progress', 'status:awaiting-merge', 'status:blocked')
+
+
+def repo_read(endpoint):
+    """Explicit GET through the existing gh integration; errors never escape raw."""
+    try:
+        return github('api', '--method', 'GET', endpoint), 'available'
+    except subprocess.CalledProcessError as error:
+        text = str(error.stderr or '').lower()
+        if 'rate limit' in text or 'http 429' in text:
+            status = 'rate_limited'
+        elif 'http 401' in text or 'http 403' in text:
+            status = 'access_denied'
+        elif 'http 404' in text:
+            status = 'unavailable_or_not_found'
+        else:
+            status = 'unavailable'
+        return None, status
+    except subprocess.TimeoutExpired:
+        return None, 'timeout'
+    except (OSError, ValueError, RuntimeError):
+        return None, 'unavailable'
+
+
+def repo_check_report(repository=None):
+    report = {'schema_version': 1, 'source': 'Authenticated GitHub gh api GET',
+              'complete': True, 'repositories': [],
+              'limits': 'Read snapshot only; successful reads do not establish write/merge authority or issue eligibility. No enrollment, label changes or dispatch.'}
+    try:
+        repos = [validate_repo(repository)] if repository is not None else enrolled()
+        report['targets'] = 'explicit' if repository is not None else 'enrolled'
+    except (OSError, ValueError, RuntimeError):
+        report.update(complete=False, diagnostic='Repository target or enrollment unavailable, unsafe or invalid; inspect privately')
+        repos = []
+    for repo in repos:
+        entry = {'repository': repo, 'metadata': {'status': 'unavailable'},
+                 'label_read': {'status': 'unavailable'},
+                 'labels': {label: 'unknown' for label in LIFECYCLE_LABELS}}
+        metadata, status = repo_read(f'repos/{repo}')
+        if status == 'available':
+            if (not isinstance(metadata, dict) or not isinstance(metadata.get('full_name'), str)
+                    or not REPO.fullmatch(metadata['full_name'])
+                    or metadata['full_name'].lower() != repo.lower()
+                    or not all(type(metadata.get(key)) is bool for key in ('private', 'archived', 'disabled', 'has_issues'))):
+                status = 'invalid_response'
+            else:
+                entry['metadata'].update({key: metadata[key] for key in ('full_name', 'private', 'archived', 'disabled', 'has_issues')})
+                permissions = metadata.get('permissions', {})
+                entry['metadata']['reported_permissions'] = {key: permissions[key] for key in ('pull', 'push', 'admin', 'maintain', 'triage')
+                    if isinstance(permissions, dict) and type(permissions.get(key)) is bool}
+        entry['metadata']['status'] = status
+        found = set()
+        # At most ten 100-label pages; reaching the cap remains unknown, never missing.
+        for page in range(1, 11):
+            labels, status = repo_read(f'repos/{repo}/labels?per_page=100&page={page}')
+            if status != 'available':
+                break
+            if (not isinstance(labels, list) or len(labels) > 100
+                    or not all(isinstance(label, dict) and isinstance(label.get('name'), str) for label in labels)):
+                status = 'invalid_response'
+                break
+            found.update(label['name'] for label in labels)
+            if len(labels) < 100:
+                break
+        else:
+            status = 'incomplete'
+        entry['label_read']['status'] = status
+        entry['labels'] = {label: 'present' if label in found else 'missing' if status == 'available' else 'unknown'
+                           for label in LIFECYCLE_LABELS}
+        if entry['metadata']['status'] != 'available' or status != 'available':
+            entry['status'] = 'read_failed'
+        elif 'missing' in entry['labels'].values():
+            entry['status'] = 'missing_labels'
+        else:
+            entry['status'] = 'configured_readable'
+        report['complete'] = report['complete'] and entry['status'] == 'configured_readable'
+        report['repositories'].append(entry)
+    return report
+
+
+def print_repo_check(repository=None, as_json=False):
+    report = repo_check_report(repository)
+    if as_json:
+        print(json.dumps(report, indent=2))
+    else:
+        print(report['source'])
+        print(report['limits'])
+        if 'diagnostic' in report:
+            print(report['diagnostic'])
+        elif not report['repositories']:
+            print('No enrolled repositories; supply an explicit owner/name or deliberately enroll one')
+        for entry in report['repositories']:
+            print(f"{entry['repository']}: {entry['status']}")
+            print('  Metadata: ' + json.dumps(entry['metadata']))
+            print('  Label read: ' + entry['label_read']['status'])
+            for label, status in entry['labels'].items():
+                print(f'  {label}: {status}')
+        print('For failed reads, check gh installation/authentication and repository access privately; for missing labels, use the manual gh label create commands in QUICKSTART.md')
+    return 0 if report['complete'] else 1
+
+
 def ready_metadata(repo: str) -> list[dict]:
     """Shared read-only ready-label source; never fetch bodies or comments."""
     result = subprocess.run(
@@ -1629,6 +1730,9 @@ def main() -> int:
         p = repo_sub.add_parser(name)
         if name != "list":
             p.add_argument("repository")
+    check = repo_sub.add_parser("check", help="Explicit authenticated read-only repository preflight; no dispatch")
+    check.add_argument("repository", nargs="?", help="owner/name; omitted checks enrolled repositories only")
+    check.add_argument("--json", action="store_true")
     watcher = sub.add_parser("watch", help="Watch GitHub and launch Codex when issues change")
     watcher.add_argument("--interval", type=int, default=180, help="Polling seconds (default: 180)")
     watcher.add_argument("--once", action="store_true", help="Check once, including a coordinator run if needed")
@@ -1650,6 +1754,8 @@ def main() -> int:
             else:
                 print(library_instructions(ROOT, overrides))
         elif args.command == "repo":
+            if args.action == "check":
+                return print_repo_check(args.repository, args.json)
             manage(args.action, getattr(args, "repository", None))
         else:
             if args.interval < 1:

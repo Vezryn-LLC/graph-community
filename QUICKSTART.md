@@ -122,6 +122,27 @@ gh label create 'status:awaiting-merge' --repo example/project --color 8250DF --
 gh label create 'status:blocked' --repo example/project --color D93F0B --description 'Unmet dependency or authority gate' --force
 ```
 
+Before dispatch, explicitly check repository access and all four lifecycle labels:
+
+```sh
+python3 -B watcher.py repo check example/project
+python3 -B watcher.py repo check example/project --json
+python3 -B watcher.py repo check --json  # enrolled repositories only
+```
+
+This is an authenticated network read through `gh`, separate from accounts-free
+`doctor`. An explicit target need not be enrolled and the check never enrolls it.
+Metadata and label reads report separately: missing labels differ from unknown
+labels after access denial, rate limiting, unavailable reads or the 1000-label
+read cap. GitHub can hide inaccessible repositories behind 404; that result cannot
+distinguish absence from denied access. Exit status is 1 for read failures or
+missing labels, 0 for configured readable targets (or no enrolled targets).
+Only permission booleans actually returned by GitHub are shown; omitted rights
+remain unknown. Read success does not grant write/merge authority or establish
+issue eligibility. Check `gh auth status` and repository access privately after
+read failures, and deliberately use the manual label commands above for missing
+labels. The check never changes labels, enrollment, services or models.
+
 Create one bounded real issue, mark it ready only when actionable, and verify no
 competing claim/PR or unresolved dependency. Enrollment alone does not make all
 issues executable. Use the existing independent public source history; never

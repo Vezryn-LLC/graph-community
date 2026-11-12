@@ -38,7 +38,7 @@
     },
     "QUICKSTART.md": {
       "mode": "0o644",
-      "sha256": "b3ba1a5584e195401fae6b0c593cfcb40333b110ee9d8bb9aaf3e800f042ac4d"
+      "sha256": "f8d897ba258b045154130d3d7513a5a20da99e9b2b71b4ef02366b597564d43a"
     },
     "README.md": {
       "mode": "0o644",
@@ -70,7 +70,7 @@
     },
     "ci/check.py": {
       "mode": "0o644",
-      "sha256": "3a805dfe639e3f7a7f797696a0bf162bb8146843e57f75fd4abcfa3b6f2855ad"
+      "sha256": "14f1ca14b5b8977c64c9091d5311d8682e8fc77694e0c351ffe59cc968e53e66"
     },
     "ci/smoke.yml.example": {
       "mode": "0o644",
@@ -103,6 +103,10 @@
     "ci/test_queue.py": {
       "mode": "0o644",
       "sha256": "6245feb62acbe39b6c485d42cfea842b27a8dd056c91f2a4d9b8abcb3764eaa9"
+    },
+    "ci/test_repo_check.py": {
+      "mode": "0o644",
+      "sha256": "b7d5e21148bcc9e7ad5a3e7abc9338e0e7f2c82687b5562e24288d6cb67e546d"
     },
     "ci/test_status.py": {
       "mode": "0o644",
@@ -346,7 +350,7 @@
     },
     "watcher.py": {
       "mode": "0o644",
-      "sha256": "a03c6d745f48e82ed47ed6d4f186453128378f5f74974dbacfc0613bd36ba97a"
+      "sha256": "72614d47083fc5568cdaa18b164cf1e78fbbb146f9433f183e04a9081e6a6796"
     }
   },
   "package": "graph-community",
