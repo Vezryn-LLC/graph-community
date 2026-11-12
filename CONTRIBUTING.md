@@ -25,6 +25,30 @@ history. The [source/notice inventory](docs/GUIDANCE-REVIEW.md) and
 [license review](LICENSE-REVIEW.md) explain the newly shipped guidance. Reassess
 provenance and include actual upstream notices for any new external material.
 
+## Small ways to start
+
+Check [open issues](https://github.com/Vezryn-LLC/graph-community/issues) and
+[PRs](https://github.com/Vezryn-LLC/graph-community/pulls) before picking a slice.
+If no suitable beginner issue exists, propose a focused documentation PR or
+ask about the scope first. These small opportunities build on current source:
+
+- **Show the first local success.** Add a short, redacted example of the
+  Quickstart's accounts-free check output, explaining what a pass proves and
+  what still needs native-host/account qualification. Capture actual output;
+  do not fabricate a Codex delivery transcript.
+- **Make Windows prerequisites easier to inspect.** Add a concise PowerShell
+  command for checking the required native Python/Git/GitHub/Codex executables
+  against the existing PATH rules. Keep WSL, batch shims and untested host
+  behavior distinct from native Windows qualification.
+- **Catch broken section links locally.** Extend `ci/check.py`'s documentation
+  link check to validate local Markdown section fragments, with small passing
+  and missing-anchor fixtures. It currently checks destination files, not
+  section anchors; keep this check accounts-free and dependency-free.
+
+These are contribution ideas, not assigned or automatically ready work. A
+deferred runtime issue is not a beginner task merely because it is open.
+Maintainers control `good first issue`, `help wanted` and Graph lifecycle labels.
+
 ## Open an issue
 
 You do not need to know Graph's internal labels or run Codex to participate.

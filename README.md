@@ -1,9 +1,54 @@
 # Graph Community
 
-Graph watches explicitly enrolled GitHub repositories and wakes a native Codex
-coordinator for actionable issues. Codex reads the original issue, claims it,
-delegates native workers in isolated worktrees, verifies changes and completes
-normal GitHub pull requests. Editable generic Markdown supplies the workflow.
+**From ready GitHub issues to ordinary pull requests, using native Codex.**
+
+Graph Community is a headless, open-source engineering coordinator for repositories
+you explicitly enroll and are authorized to work in. Bring a bounded issue and
+your own GitHub/Codex tools; Graph watches for actionable work, then lets native
+Codex coordinate implementation and verification through your existing PR workflow.
+
+**[Try the Quickstart](QUICKSTART.md)** ·
+[Latest public release](https://github.com/Vezryn-LLC/graph-community/releases/latest) ·
+[Architecture](ARCHITECTURE.md) · [Platform limits](PLATFORMS.md) ·
+[Contribute](CONTRIBUTING.md)
+
+## How work moves
+
+```text
+Enrolled repository + actionable ready issue
+                    ↓
+Native Codex coordinator reads and claims the original issue
+                    ↓
+Native workers implement in isolated branches/worktrees
+                    ↓
+Affected checks → ordinary GitHub PR and recorded outcome
+```
+
+- **Keep the work in GitHub.** Original issues, claims, blockers and PRs remain
+  the record; no hosted control plane is required.
+- **Use native Codex workers.** The coordinator delegates independent work and
+  reconciles ownership and results. Actual capacity depends on your client/account.
+- **Adapt the workflow in Markdown.** The [engineering library](docs/LIBRARY.md)
+  supplies editable playbooks, skills and policies rather than another model API.
+
+[See the Graph workflow film](https://vezryn.com/products/graph/#film).
+It uses illustrative interface footage to explain the flow; it is not an
+authenticated terminal recording or proof of a particular delivery.
+
+## Try it or help improve it
+
+Start with the Quickstart's [accounts-free local check](QUICKSTART.md#local-check-without-accounts-or-services).
+Real GitHub work additionally needs your authenticated tools, permissions and
+qualified native client. Enrollment limits discovery; it grants no access, and
+opening an issue does not automatically enqueue a worker.
+
+For a small contribution, read [the contributor onramp](CONTRIBUTING.md#small-ways-to-start),
+check [open issues](https://github.com/Vezryn-LLC/graph-community/issues) and
+[existing PRs](https://github.com/Vezryn-LLC/graph-community/pulls), then propose
+one focused change. Reports and documentation fixes are welcome without running
+Codex or knowing the maintainer lifecycle labels.
+
+## Releases and included source
 
 Graph Community is public at `Vezryn-LLC/graph-community`, licensed under
 [Apache-2.0](LICENSE). The immutable [v0.1.0 release](https://github.com/Vezryn-LLC/graph-community/releases/tag/v0.1.0)
@@ -11,9 +56,8 @@ is the baseline. v0.1.1 adds the engineering library, readable public-safe claim
 and contributor instructions. No account, repository permission, model entitlement
 or trusted client capability is bundled.
 
-Start with [the beginner quickstart](QUICKSTART.md), then read [platform support
-and limits](PLATFORMS.md), [architecture](ARCHITECTURE.md) and the generic
-[AGENTS.md](AGENTS.md). [Smoke commands](SMOKE-MATRIX.md) and an inert
+Read the generic [AGENTS.md](AGENTS.md) before real assignments.
+[Smoke commands](SMOKE-MATRIX.md) and an inert
 [CI example](ci/smoke.yml.example) describe qualification, not promised support.
 [Contributing](CONTRIBUTING.md), [security reporting](SECURITY.md),
 [independent-history rules](IMPORT.md), the historical
@@ -21,6 +65,8 @@ and limits](PLATFORMS.md), [architecture](ARCHITECTURE.md) and the generic
 [v0.1.1 notes](RELEASE-NOTES-v0.1.1.md) describe the source and release boundaries.
 The default [engineering library](docs/LIBRARY.md) contains 22 playbooks, 10 skills
 and six policies; see its [inventory and source review](docs/GUIDANCE-REVIEW.md).
+
+## Boundaries and platform evidence
 
 The package has no graphical desktop, company telemetry, private metrics,
 private product profiles, automatic updates or hosted control plane. Graph is
