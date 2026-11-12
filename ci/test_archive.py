@@ -96,6 +96,12 @@ class ArchiveTests(unittest.TestCase):
             (source / 'private-state.txt').write_text('not public')
             with self.assertRaises(AssertionError):
                 check.check_payload(source)
+            if sys.platform != 'win32':
+                (source / 'private-state.txt').unlink()
+                manifest_path.unlink()
+                manifest_path.symlink_to(source.parent / 'unavailable-manifest')
+                with self.assertRaisesRegex(AssertionError, 'Invalid manifest file'):
+                    check.check_payload(source)
 
 
 if __name__ == '__main__':

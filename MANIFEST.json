@@ -70,7 +70,7 @@
     },
     "ci/check.py": {
       "mode": "0o644",
-      "sha256": "3885c1799328c4e619725dc2737ac3b62d64f2ef609a6c2b08d9d22dd5add12c"
+      "sha256": "f4ed6900a69d0761dbd042902d5441a6ee99a3032ed23777e5dbc5a8912a462e"
     },
     "ci/smoke.yml.example": {
       "mode": "0o644",
@@ -78,7 +78,7 @@
     },
     "ci/test_archive.py": {
       "mode": "0o644",
-      "sha256": "6871517acecefa8acf25e0077f9730eda8363c982c8ddd1b38d64234f8132415"
+      "sha256": "2a3ec7b29a81eaa6a9b6989e6f4976e465b9b08bf46ff2a4e8d105f794ee8970"
     },
     "ci/test_doctor.py": {
       "mode": "0o644",

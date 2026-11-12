@@ -157,7 +157,9 @@ def check_links(root, names):
 
 def check_payload(root):
     """Validate the reviewed source payload and return its exact file bytes."""
-    manifest_bytes = (root / 'MANIFEST.json').read_bytes()
+    manifest_path = root / 'MANIFEST.json'
+    assert not manifest_path.is_symlink() and manifest_path.is_file(), 'Invalid manifest file'
+    manifest_bytes = manifest_path.read_bytes()
     manifest = json.loads(manifest_bytes)
     contents = {'MANIFEST.json': manifest_bytes}
     check_content('MANIFEST.json', manifest_bytes)
