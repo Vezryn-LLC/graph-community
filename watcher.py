@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import platform as host_platform
 import re
 import shlex
 import stat
@@ -26,6 +27,86 @@ STOP_REQUEST = STATE / "stop-request"
 REF = re.compile(r"(?:https://github\.com/)?([A-Za-z0-9-]+/[A-Za-z0-9_.-]+)(?:#|/issues/)([0-9]+)")
 PR_REF = re.compile(r"https://github\.com/([A-Za-z0-9-]+/[A-Za-z0-9_.-]+)/pull/([0-9]+)")
 REPO = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9_.-]+\Z")
+
+
+def doctor() -> dict:
+    """Inspect local prerequisites only; never execute tools or prepare state."""
+    capabilities = platform.capabilities()
+    try:
+        launcher = platform.executable('codex')
+        if platform.platform_name() == 'windows':
+            with Path(launcher).open('rb') as file:
+                if file.read(2) != b'MZ':
+                    raise ValueError('Not a native Windows executable')
+        native = {'status': 'available', 'diagnostic': 'Native launcher resolved; not executed or authenticated'}
+    except (OSError, ValueError, RuntimeError):
+        native = {'status': 'unavailable', 'diagnostic': 'Put a supported native Codex executable on PATH; script wrappers may be unsupported'}
+
+    # Do not use enrolled(): preflight must safely reject linked, oversized,
+    # foreign-owned or permissive config rather than expose names or raw errors.
+    try:
+        with platform.private_read(CONFIG) as file:
+            data = tomllib.load(file)
+        repos = data.get('repositories', [])
+        if not isinstance(repos, list) or not all(isinstance(repo, str) for repo in repos):
+            raise ValueError('Invalid repository list')
+        for repo in repos:
+            validate_repo(repo)
+        if len({repo.lower() for repo in repos}) != len(repos):
+            raise ValueError('Duplicate repository')
+        config = {'status': 'available', 'repository_count': len(repos)}
+    except FileNotFoundError:
+        config = {'status': 'not_configured', 'repository_count': None,
+                  'diagnostic': 'No readable configuration found; no enrollment created'}
+    except (OSError, ValueError, RuntimeError):
+        config = {'status': 'unknown', 'repository_count': None,
+                  'diagnostic': 'Configuration unreadable, unsafe or invalid; contents withheld'}
+
+    try:
+        overrides = Path(os.environ.get('VEZRYN_GRAPH_LIBRARY', str(CONFIG.parent / 'library'))).expanduser()
+        if (overrides.exists() or overrides.is_symlink()) and not overrides.is_dir():
+            raise ValueError('Override location is not a directory')
+        effective = library_resolve(ROOT, overrides)
+        required = ('ISSUE_SELECTION', 'ISSUE_LIFECYCLE', 'ENGINEERING',
+                    'MODEL_ROUTING', 'ROUTING_MATRIX', 'DELEGATION')
+        readable = {name for name, path in effective.items() if path.is_file() and os.access(path, os.R_OK)}
+        library = {'status': 'available' if len(readable) == len(effective) else 'unavailable',
+                   'effective_entries': len(effective), 'readable_entries': len(readable),
+                   'required_policies': {name: f'policies/{name}.md' in readable for name in required},
+                   'overrides': 'present' if overrides.is_dir() else 'absent (bundled guidance applies)'}
+        if not all(library['required_policies'].values()):
+            library['status'] = 'unavailable'
+    except (OSError, ValueError, RuntimeError):
+        library = {'status': 'unknown', 'diagnostic': 'Effective library unavailable; inspect local override configuration privately'}
+
+    return {'schema_version': 1,
+            'python': {'version': host_platform.python_version(), 'supported': sys.version_info >= (3, 11)},
+            'os': {'name': capabilities['platform'], 'release': host_platform.release()},
+            'prerequisites': {name: capabilities['prerequisites'][name] for name in ('git', 'gh', 'codex')},
+            'native_codex': native, 'configuration': config, 'library': library,
+            'platform': capabilities,
+            'limits': 'Local read-only preflight; authentication, permissions, trusted hooks, worker delivery and native-host qualification NOT checked'}
+
+
+def print_doctor(as_json=False):
+    report = doctor()
+    if as_json:
+        print(json.dumps(report, indent=2))
+        return
+    print(f"Python {report['python']['version']} | OS {report['os']['name']} {report['os']['release']}")
+    for name, found in report['prerequisites'].items():
+        print(f"{name}: {'found on PATH' if found else 'missing from PATH'}")
+    print(f"Codex native launcher: {report['native_codex']['status']} — {report['native_codex']['diagnostic']}")
+    config = report['configuration']
+    print(f"Configuration: {config['status']} | repository count: {config['repository_count']}")
+    if 'diagnostic' in config:
+        print(config['diagnostic'])
+    print('Effective library: ' + json.dumps(report['library']))
+    print('Platform qualification: ' + report['platform']['qualification'])
+    for name, value in report['platform']['capabilities'].items():
+        print(f"  {name}: {'available' if value['available'] else 'unavailable'}" +
+              (f" — {value['diagnostic']}" if value['diagnostic'] else ''))
+    print(report['limits'])
 
 
 def validate_repo(name: str) -> str:
@@ -1384,6 +1465,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("capabilities", help="Versioned OS capability JSON; no runtime ownership inference")
+    sub.add_parser("doctor", help="Read-only accounts-free local preflight; no dispatch").add_argument("--json", action="store_true")
     sub.add_parser("status", help="Read local post-run disposition diagnostics; no network or inference").add_argument("--details", action="store_true")
     sub.add_parser("library", help="Show effective Markdown paths and override precedence")
     repo_cmd = sub.add_parser("repo", help="Manage watched GitHub repositories")
@@ -1399,6 +1481,8 @@ def main() -> int:
     try:
         if args.command == "capabilities":
             print(json.dumps(platform.capabilities()))
+        elif args.command == "doctor":
+            print_doctor(args.json)
         elif args.command == "status":
             run_status(args.details)
         elif args.command == "library":

@@ -32,6 +32,7 @@ From the runtime copy on Linux or Mac:
 ```sh
 python3 --version
 python3 -B ci/check.py
+python3 -B watcher.py doctor
 python3 -B watcher.py capabilities
 python3 -B smoke.py
 ```
@@ -42,6 +43,7 @@ On native Windows PowerShell:
 $Python = (Get-Command python.exe).Source
 & $Python --version
 & $Python -B .\ci\check.py
+& $Python -B .\watcher.py doctor
 & $Python -B .\watcher.py capabilities
 & $Python -B .\smoke.py
 ```
@@ -50,6 +52,16 @@ $Python = (Get-Command python.exe).Source
 entrypoints and executes the local primitive smoke in fresh temporary state. It
 uses no GitHub/Codex credentials, enrollment, service manager or model call.
 A passing smoke proves only the operations named in its output.
+
+`watcher.py doctor` is a read-only, accounts-free local preflight (`--json` for
+structured facts). It discovers tools without running them, checks native Codex
+launcher resolution, safely counts configured repositories without listing them,
+and reports effective guidance availability and existing platform limits. Unsafe,
+unreadable or invalid config is reported as unknown; absent config is left absent.
+It creates no state and makes no network, authentication, service or worker call.
+It reports diagnostics and exits normally even when prerequisites are missing;
+neither its exit status nor tool presence proves authentication, trusted hooks,
+permissions or native-host qualification. `watch --once` below is real dispatch.
 
 ## One real issue, only after native-host/account authorization
 
