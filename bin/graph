@@ -16,7 +16,7 @@ usage() {
 active() { systemctl --user is-active --quiet "$UNIT"; }
 
 case "${1:-}" in
-  install|uninstall|start)
+  install|uninstall|start|stop)
     [ "$#" -eq 1 ] || { usage >&2; exit 2; }
     exec /usr/bin/python3 -B - "$ROOT" "$SOURCE" "$1" <<'PY'
 """Embedded Linux package lifecycle. No shell evaluation or data deletion."""
@@ -35,7 +35,10 @@ HOME = Path.home()
 UNIT = 'graph-community.service'
 UNIT_PATH = HOME / '.config/systemd/user' / UNIT
 BIN = HOME / '.local/bin/graph'
-STATE = Path(os.environ.get('VEZRYN_GRAPH_STATE', HOME / '.local/state/graph-community'))
+CONFIG = Path(os.path.abspath(Path(os.environ.get('VEZRYN_GRAPH_CONFIG', HOME / '.config/graph-community/repos.toml')).expanduser()))
+STATE = Path(os.path.abspath(Path(os.environ.get('VEZRYN_GRAPH_STATE', HOME / '.local/state/graph-community')).expanduser()))
+PROFILE = {'VEZRYN_GRAPH_CONFIG': str(CONFIG), 'VEZRYN_GRAPH_STATE': str(STATE),
+           'VEZRYN_GRAPH_LIBRARY': os.path.abspath(Path(os.environ.get('VEZRYN_GRAPH_LIBRARY', CONFIG.parent / 'library')).expanduser())}
 STOP = STATE / 'stop-request'
 
 
@@ -47,10 +50,12 @@ def quote(value):
     return '"' + value.replace('\\', '\\\\').replace('"', '\\"').replace('%', '%%') + '"'
 
 
-def unit_text(path):
+def unit_text(path, profile=PROFILE):
+    environment = {'PATH': path, **profile}
     return ('[Unit]\nDescription=Graph Community GitHub issue watcher\n\n[Service]\n'
-            'Type=simple\nWorkingDirectory=' + ROOT.replace('%', '%%') + '\nEnvironment=' + quote('PATH=' + path) +
-            '\nExecStart=:/usr/bin/python3 -u ' + quote(ROOT + '/watcher.py') + ' watch\nRestart=no\n')
+            'Type=simple\nWorkingDirectory=' + ROOT.replace('%', '%%') + '\n' +
+            ''.join('Environment=' + quote(key + '=' + value) + '\n' for key, value in environment.items()) +
+            'ExecStart=:/usr/bin/python3 -u ' + quote(ROOT + '/watcher.py') + ' watch\nRestart=no\n')
 
 
 def snapshot(path):
@@ -65,35 +70,52 @@ def snapshot(path):
     raise RuntimeError('Refusing special or hardlinked file: ' + str(path))
 
 
-def owned_unit(value):
+def installed_profile(value):
+    """Return a bound profile, None for an exact old unit; reject foreign units."""
     if value is None:
-        return True
+        return None
     if value[0] != 'file':
-        return False
+        raise RuntimeError('Refusing nonowned unit installation')
     text = value[1].decode('utf-8')
-    # Reinstall accepts a different previous PATH only when the entire remaining
-    # unit is exactly this source's generated service. No extra directives.
-    lines = text.splitlines(keepends=True)
-    env = next((line for line in lines if line.startswith('Environment=')), '')
-    if not re.fullmatch(r'Environment="PATH=(?:[^"\\\n]|\\["\\])*"\n', env):
-        return False
-    current = unit_text(os.environ['PATH'])
-    expected_env = next(line for line in current.splitlines(keepends=True) if line.startswith('Environment='))
-    if text == current.replace(expected_env, env):
-        return True
+    environment = {}
+    for line in text.splitlines():
+        if not line.startswith('Environment='):
+            continue
+        match = re.fullmatch(r'Environment="((?:[^"\\]|\\["\\])*)"', line)
+        if not match:
+            raise RuntimeError('Refusing modified unit environment')
+        decoded = re.sub(r'\\(["\\])', r'\1', match[1]).replace('%%', '%')
+        if 'Environment=' + quote(decoded) != line or '=' not in decoded:
+            raise RuntimeError('Refusing modified unit environment')
+        key, entry = decoded.split('=', 1)
+        if key in environment:
+            raise RuntimeError('Refusing duplicate unit environment')
+        environment[key] = entry
+    if set(environment) == {'PATH', *PROFILE}:
+        profile = {key: environment[key] for key in PROFILE}
+        if text == unit_text(environment['PATH'], profile):
+            return profile
+    # Only exact source-owned PATH-only predecessors can be rebound, while idle.
+    if set(environment) != {'PATH'}:
+        raise RuntimeError('Refusing nonowned unit installation')
+    env = 'Environment=' + quote('PATH=' + environment['PATH']) + '\n'
+    if text == unit_text(environment['PATH'], {}):
+        return None
     # Exact previously shipped Linux unit: migration, including its unquoted
     # whitespace defect. A matching CLI alone never establishes unit ownership.
     legacy = ('[Unit]\nDescription=Graph Community GitHub issue watcher\n\n[Service]\n'
               'Type=simple\nWorkingDirectory=' + ROOT + '\n' + env +
               'ExecStart=/usr/bin/python3 -u ' + ROOT + '/watcher.py watch\nRestart=no\n')
-    return text == legacy
+    if text == legacy:
+        return None
+    raise RuntimeError('Refusing nonowned unit installation')
 
 
 def manager():
     result = subprocess.run(['systemctl', '--user', 'show', UNIT,
         '--property=LoadState', '--property=FragmentPath', '--property=DropInPaths',
         '--property=ActiveState', '--property=MainPID', '--property=TasksCurrent',
-        '--property=UnitFileState'], text=True, capture_output=True, timeout=30)
+        '--property=UnitFileState', '--property=NeedDaemonReload'], text=True, capture_output=True, timeout=30)
     values = dict(line.split('=', 1) for line in result.stdout.splitlines() if '=' in line)
     if result.returncode and not (result.returncode == 4 and values.get('LoadState') == 'not-found'):
         raise RuntimeError('Cannot inspect user manager: ' + result.stderr.strip())
@@ -143,8 +165,24 @@ def replace(path, value):
         temporary.unlink(missing_ok=True)
 
 
+def locked(path):
+    file = os.fdopen(os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600), 'r+')
+    try:
+        info = os.fstat(file.fileno())
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_uid != os.getuid() or info.st_mode & 0o077:
+            raise RuntimeError('Refusing unsafe service-control lock')
+        fcntl.flock(file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return file
+    except BlockingIOError:
+        file.close()
+        raise RuntimeError('Graph activation or service control is in progress; refresh before changing service state') from None
+    except BaseException:
+        file.close()
+        raise
+
+
 def main():
-    for value in (ROOT, SOURCE, str(HOME), os.environ.get('PATH', '')):
+    for value in (ROOT, SOURCE, str(HOME), os.environ.get('PATH', ''), *PROFILE.values()):
         quote(value)  # Validate before creating any installation file.
     # WorkingDirectory= takes a literal path, not a quoted word list. Unit-file
     # trailing whitespace/continuations cannot represent these paths safely.
@@ -154,70 +192,97 @@ def main():
                              ('gh', 'GitHub CLI (gh) not on PATH'), ('codex', 'Codex CLI not on PATH')):
         if (ACTION == 'install' or tool == 'systemctl') and not shutil.which(tool):
             raise RuntimeError(diagnostic)
-    directories(STATE)
-    with os.fdopen(os.open(STATE / 'update.lock', os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600), 'r+') as lock:
-        try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            raise RuntimeError('Graph activation in progress; refresh before changing service state')
-        for directory in (UNIT_PATH.parent, BIN.parent):
-            directories(directory)
+    directories(UNIT_PATH.parent)
+    # The service is single-instance even when callers select different profiles.
+    with locked(UNIT_PATH.parent / '.graph-community-control.lock'):
         before = {path: snapshot(path) for path in (UNIT_PATH, BIN)}
-        if not owned_unit(before[UNIT_PATH]) or before[BIN] not in (None, ('link', SOURCE)):
+        profile = installed_profile(before[UNIT_PATH])
+        if before[BIN] not in (None, ('link', SOURCE)):
             raise RuntimeError('Refusing to change nonowned unit or CLI installation')
         status = manager()
-        if ACTION == 'start':
+        if ACTION != 'install':
             if before[UNIT_PATH] is None:
-                raise RuntimeError('Install this source before starting its service')
+                raise RuntimeError('Install this source before controlling its service')
+            if profile is None:
+                raise RuntimeError('Legacy service has no bound profile; verify its original state and drain it, then reinstall while idle to bind the selected profile')
+            if profile != PROFILE:
+                raise RuntimeError('Selected profile differs from the installed service; use the same VEZRYN_GRAPH_CONFIG, VEZRYN_GRAPH_STATE and VEZRYN_GRAPH_LIBRARY, or drain the installed profile and reinstall while idle')
+            if status.get('NeedDaemonReload') != 'no':
+                raise RuntimeError('Loaded service identity is unverified; reconcile/reload the owned unit before control')
+        directories(STATE)
+        directories(BIN.parent)
+        with locked(STATE / 'update.lock'):
+            if snapshot(UNIT_PATH) != before[UNIT_PATH] or snapshot(BIN) != before[BIN]:
+                raise RuntimeError('Installation changed concurrently; refresh before control')
+            change(before, status)
+
+
+def change(before, status):
+    if ACTION == 'stop':
+        if status.get('ActiveState') == 'active':
             marker = snapshot(STOP)
             if marker is not None and marker[0] != 'file':
                 raise RuntimeError('Refusing nonregular stop marker')
-            if marker is not None:
-                STOP.unlink()
-            try:
-                if status.get('ActiveState') != 'active':
-                    ctl('start', UNIT)
-                if manager().get('ActiveState') != 'active':
-                    raise RuntimeError('Manager did not confirm an active watcher')
-            except (RuntimeError, OSError, subprocess.TimeoutExpired):
-                if marker is not None and snapshot(STOP) is None:
-                    replace(STOP, marker)
-                raise
-            print('Graph watcher started. Use: graph status')
-            return
-        if status.get('ActiveState') not in ('inactive', 'failed') or status.get('MainPID', '0') != '0' or status.get('TasksCurrent', '0') not in ('0', '[not set]'):
-            raise RuntimeError('Service is active or unverified; graph stop and wait for a verified drain first')
-        desired = ({UNIT_PATH: ('file', unit_text(os.environ['PATH']).encode(), 0o644), BIN: ('link', SOURCE)}
-                   if ACTION == 'install' else {UNIT_PATH: None, BIN: None})
-        changed = []
+            if marker is None:
+                replace(STOP, ('file', b'', 0o600))
+            print('Graph stopping: no new issues will be dispatched.')
+            print('Any in-flight Codex coordinator finishes before the watcher exits.')
+        elif status.get('ActiveState') in ('inactive', 'failed') and status.get('MainPID', '0') == '0' and status.get('TasksCurrent', '0') in ('0', '[not set]'):
+            print('Graph is already stopped.')
+        else:
+            raise RuntimeError('Service state is unverified; preserve it and refresh before requesting drain')
+        return
+    if ACTION == 'start':
+        marker = snapshot(STOP)
+        if marker is not None and marker[0] != 'file':
+            raise RuntimeError('Refusing nonregular stop marker')
+        if marker is not None:
+            STOP.unlink()
         try:
-            for path, value in desired.items():
-                if value != before[path]:
-                    if snapshot(path) != before[path]:
-                        raise RuntimeError('Installation changed concurrently: ' + str(path))
-                    replace(path, value)
-                    changed.append(path)
-            ctl('daemon-reload')
-            loaded = manager()['LoadState']
-            if loaded != ('loaded' if ACTION == 'install' else 'not-found'):
-                raise RuntimeError('Manager did not confirm the requested installation state')
-        except (RuntimeError, OSError, subprocess.TimeoutExpired) as error:
-            rollback = []
-            for path in reversed(changed):
-                try:
-                    if snapshot(path) != desired[path]:
-                        raise RuntimeError('changed concurrently; preserved')
-                    replace(path, before[path])
-                except (RuntimeError, OSError) as failure:
-                    rollback.append(str(path) + ': ' + str(failure))
+            if status.get('ActiveState') != 'active':
+                ctl('start', UNIT)
+            confirmed = manager()
+            if confirmed.get('ActiveState') != 'active' or confirmed.get('NeedDaemonReload') != 'no':
+                raise RuntimeError('Manager did not confirm an active watcher with current unit identity')
+        except (RuntimeError, OSError, subprocess.TimeoutExpired):
+            if marker is not None and snapshot(STOP) is None:
+                replace(STOP, marker)
+            raise
+        print('Graph watcher started. Use: graph status')
+        return
+    if status.get('ActiveState') not in ('inactive', 'failed') or status.get('MainPID', '0') != '0' or status.get('TasksCurrent', '0') not in ('0', '[not set]'):
+        raise RuntimeError('Service is active or unverified; graph stop and wait for a verified drain first')
+    desired = ({UNIT_PATH: ('file', unit_text(os.environ['PATH']).encode(), 0o644), BIN: ('link', SOURCE)}
+               if ACTION == 'install' else {UNIT_PATH: None, BIN: None})
+    changed = []
+    try:
+        for path, value in desired.items():
+            if value != before[path]:
+                if snapshot(path) != before[path]:
+                    raise RuntimeError('Installation changed concurrently: ' + str(path))
+                replace(path, value)
+                changed.append(path)
+        ctl('daemon-reload')
+        loaded = manager()['LoadState']
+        if loaded != ('loaded' if ACTION == 'install' else 'not-found'):
+            raise RuntimeError('Manager did not confirm the requested installation state')
+    except (RuntimeError, OSError, subprocess.TimeoutExpired) as error:
+        rollback = []
+        for path in reversed(changed):
             try:
-                ctl('daemon-reload')
-            except (RuntimeError, OSError, subprocess.TimeoutExpired) as failure:
-                rollback.append('manager reload remains unverified: ' + str(failure))
-            raise RuntimeError(str(error) + '; owned file changes rolled back' +
-                               ('; rollback incomplete: ' + '; '.join(rollback) if rollback else ''))
-        print(('Installed service and CLI (not started or enabled).' if ACTION == 'install' else
-               'Uninstalled service and CLI. Package source and all configuration, state, journals, claims and worktrees preserved.'))
+                if snapshot(path) != desired[path]:
+                    raise RuntimeError('changed concurrently; preserved')
+                replace(path, before[path])
+            except (RuntimeError, OSError) as failure:
+                rollback.append(str(path) + ': ' + str(failure))
+        try:
+            ctl('daemon-reload')
+        except (RuntimeError, OSError, subprocess.TimeoutExpired) as failure:
+            rollback.append('manager reload remains unverified: ' + str(failure))
+        raise RuntimeError(str(error) + '; owned file changes rolled back' +
+                           ('; rollback incomplete: ' + '; '.join(rollback) if rollback else ''))
+    print(('Installed service and CLI (not started or enabled).' if ACTION == 'install' else
+           'Uninstalled service and CLI. Package source and all configuration, state, journals, claims and worktrees preserved.'))
 
 
 try:
@@ -227,16 +292,6 @@ except (RuntimeError, OSError, ValueError, subprocess.TimeoutExpired) as error:
     raise SystemExit(1)
 
 PY
-    ;;
-  stop)
-    if active; then
-      mkdir -p "$STATE"
-      touch "$STOP"
-      echo "Graph stopping: no new issues will be dispatched."
-      echo "Any in-flight Codex coordinator finishes before the watcher exits."
-    else
-      echo "Graph is already stopped."
-    fi
     ;;
   status)
     [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = "--details" ]; } || { usage >&2; exit 2; }

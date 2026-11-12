@@ -39,6 +39,7 @@ PAYLOAD_FILES = frozenset({
     'ci/test_queue.py',
     'ci/test_first_issue.py',
     'ci/test_enrollment.py',
+    'ci/test_linux_profile.py',
     'docs/GUIDANCE-REVIEW.md',
     'docs/LIBRARY.md',
     'docs/wiki/Community-and-Upkeep.md',
