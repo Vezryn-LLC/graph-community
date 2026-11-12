@@ -211,10 +211,12 @@ def uninstall():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
-    for command in ('install', 'start', 'stop', 'uninstall', 'logs', 'capabilities', 'version', 'check-update', 'apply-update', 'library'):
+    for command in ('install', 'start', 'stop', 'uninstall', 'logs', 'capabilities', 'version', 'check-update', 'apply-update', 'doctor', 'queue', 'library'):
         command_parser = sub.add_parser(command)
-        if command in ('version', 'check-update', 'apply-update'):
+        if command in ('version', 'check-update', 'apply-update', 'doctor', 'queue'):
             command_parser.add_argument('--json', action='store_true')
+        if command == 'library':
+            command_parser.add_argument('--explain', action='store_true')
     sub.add_parser('status').add_argument('--json', action='store_true')
     sub.add_parser('repo').add_argument('args', nargs=argparse.REMAINDER)
     args = parser.parse_args()
@@ -224,9 +226,9 @@ def main():
             return 0
         if platform.platform_name() != 'windows':
             raise RuntimeError('Native Windows runner requires Windows; Linux/WSL is not a substitute')
-        if args.command in ('repo', 'library', 'version', 'check-update', 'apply-update'):
-            file = 'watcher.py' if args.command in ('repo', 'library') else 'graph_update.py'
-            return subprocess.call([sys.executable, '-B', str(ROOT / file), args.command, *(args.args if args.command == 'repo' else ['--json'] if getattr(args, 'json', False) else [])])
+        if args.command in ('repo', 'doctor', 'queue', 'library', 'version', 'check-update', 'apply-update'):
+            file = 'watcher.py' if args.command in ('repo', 'doctor', 'queue', 'library') else 'graph_update.py'
+            return subprocess.call([sys.executable, '-B', str(ROOT / file), args.command, *(args.args if args.command == 'repo' else ['--explain'] if getattr(args, 'explain', False) else ['--json'] if getattr(args, 'json', False) else [])])
         if args.command == 'status':
             value = status()
             print(json.dumps(value) if args.json else 'Graph: ' + value['service'] + (' · ' + value['diagnostic'] if value.get('diagnostic') else ''))

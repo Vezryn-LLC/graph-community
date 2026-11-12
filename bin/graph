@@ -9,8 +9,9 @@ STATE="${VEZRYN_GRAPH_STATE:-$HOME/.local/state/graph-community}"
 STOP="$STATE/stop-request"
 
 usage() {
-  echo 'Usage: graph {install|uninstall|start|stop|status|logs|repo|queue|capabilities|version|check-update|apply-update}'
+  echo 'Usage: graph {install|uninstall|start|stop|status|logs|repo|doctor|queue|library|capabilities|version|check-update|apply-update}'
   echo 'stop: cease new dispatch; let any in-flight coordinator finish'
+  echo 'doctor/queue: --json; library: --explain; repo: add|revoke|list|check [OWNER/NAME] [--json]'
   echo 'version/check-update/apply-update: --json; status: --details or --json'
 }
 active() { systemctl --user is-active --quiet "$UNIT"; }
@@ -319,7 +320,7 @@ PY
   logs)
     exec journalctl --user -u "$UNIT" --no-pager -n 40 -f
     ;;
-  queue)
+  doctor|queue|library)
     exec /usr/bin/python3 -B "$ROOT/watcher.py" "$@"
     ;;
   repo)

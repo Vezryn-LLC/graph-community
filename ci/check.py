@@ -40,6 +40,7 @@ PAYLOAD_FILES = frozenset({
     'ci/test_library.py',
     'ci/test_doctor.py',
     'ci/test_queue.py',
+    'ci/test_entrypoints.py',
     'ci/test_repo_check.py',
     'ci/test_status.py',
     'ci/test_first_issue.py',

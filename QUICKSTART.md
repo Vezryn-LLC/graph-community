@@ -68,11 +68,26 @@ It reports diagnostics and exits normally even when prerequisites are missing;
 neither its exit status nor tool presence proves authentication, trusted hooks,
 permissions or native-host qualification. `watch --once` below is real dispatch.
 
+The platform entrypoints forward the same read-only diagnostics and preserve the
+watcher's stdout and exit status. Use these commands from the runtime copy:
+
+| Platform | Local facts | Effective library provenance | Current GitHub candidates |
+| --- | --- | --- | --- |
+| Linux | `bin/graph doctor --json` | `bin/graph library --explain` | `bin/graph queue --json` |
+| macOS | `python3 -B graph_macos.py doctor --json` | `python3 -B graph_macos.py library --explain` | `python3 -B graph_macos.py queue --json` |
+| Windows PowerShell | `& $Python -B .\graph_windows.py doctor --json` | `& $Python -B .\graph_windows.py library --explain` | `& $Python -B .\graph_windows.py queue --json` |
+
+Omit `--json` or `--explain` for the existing human-readable output. These
+commands need no service installation or service-manager probe. Only `queue`
+reads GitHub; it requires the account access described below. The macOS and
+Windows runners retain their experimental native-platform qualification limits;
+platform-isolated routing tests do not establish native service qualification.
+
 ## Look at current candidates without dispatch
 
 After enrolling repositories, use `python3 -B watcher.py queue` (or `queue --json`)
 to read their current open `status:ready` metadata through your authenticated
-GitHub CLI. Linux CLI users can also run `bin/graph queue`. This command makes no
+GitHub CLI, using the platform entrypoints above or the watcher directly. This command makes no
 state changes and launches no coordinator, worker, model call or service. It
 reads issue numbers, update timestamps and labels, never bodies or comments.
 
