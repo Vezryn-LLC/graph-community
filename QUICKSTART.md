@@ -63,6 +63,28 @@ It reports diagnostics and exits normally even when prerequisites are missing;
 neither its exit status nor tool presence proves authentication, trusted hooks,
 permissions or native-host qualification. `watch --once` below is real dispatch.
 
+## Look at current candidates without dispatch
+
+After enrolling repositories, use `python3 -B watcher.py queue` (or `queue --json`)
+to read their current open `status:ready` metadata through your authenticated
+GitHub CLI. Linux CLI users can also run `bin/graph queue`. This command makes no
+state changes and launches no coordinator, worker, model call or service. It
+reads issue numbers, update timestamps and labels, never bodies or comments.
+
+`READY_LABEL_CANDIDATE` is not Graph-validated eligibility: ownership,
+dependencies, blocked comments and recovery/source gates may exclude it. Conflicting
+lifecycle labels remain visible. Each repository reports its read timestamp and
+source age; a failed read or the 1000-issue cap makes the snapshot incomplete and
+returns exit code 1. An empty successful read means no ready-label candidates in
+that repository; a failed read does not mean an empty queue. JSON schema version 1
+includes `generated_at`, `complete`, configuration status and per-repository
+status, observation time, age and candidates. Raw errors, local paths and credentials
+are withheld. Invalid or duplicate enrollment is reported without reading GitHub.
+
+`queue` looks at current GitHub metadata; `status` describes prior local runs;
+`watch --once` can dispatch real work. Accounts-free verification remains
+`ci/check.py` with fake GitHub responses.
+
 ## One real issue, only after native-host/account authorization
 
 Use an authorized disposable PRIVATE test repository with no production data;

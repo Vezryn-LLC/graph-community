@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import calendar
 from collections import Counter
 import hashlib
 import json
@@ -167,24 +168,34 @@ def manage(action: str, repo: str | None) -> None:
     print(f"{action}: {repo} ({len(current)} enrolled)")
 
 
+def ready_metadata(repo: str) -> list[dict]:
+    """Shared read-only ready-label source; never fetch bodies or comments."""
+    result = subprocess.run(
+        [platform.executable("gh"), "issue", "list", "--repo", repo, "--state", "open",
+         "--label", "status:ready", "--limit", "1000",
+         "--json", "number,updatedAt,labels"],
+        capture_output=True, text=True, timeout=60, check=True,
+    )
+    issues = json.loads(result.stdout)
+    if not isinstance(issues, list):
+        raise ValueError("GitHub issue response was not a list")
+    for issue in issues:
+        if (not isinstance(issue, dict) or type(issue.get("number")) is not int
+                or issue["number"] < 1 or not isinstance(issue.get("updatedAt"), str)
+                or not isinstance(issue.get("labels"), list)
+                or not all(isinstance(label, dict) and isinstance(label.get("name"), str)
+                           for label in issue["labels"])):
+            raise ValueError("Unexpected issue data")
+    return issues
+
+
 def backlog(repositories: list[str]) -> tuple[list[dict], int]:
     """Only fetch issue metadata. Codex owns all task-selection decisions."""
     results, failures = [], 0
     for repo in repositories:
         try:
-            result = subprocess.run(
-                [platform.executable("gh"), "issue", "list", "--repo", repo, "--state", "open",
-                 "--label", "status:ready", "--limit", "1000",
-                 "--json", "number,updatedAt,labels"],
-                capture_output=True, text=True, timeout=60, check=True,
-            )
-            issues = json.loads(result.stdout)
-            if not isinstance(issues, list):
-                raise ValueError("GitHub issue response was not a list")
-            for issue in issues:
-                if not isinstance(issue, dict) or type(issue.get("number")) is not int or not isinstance(issue.get("updatedAt"), str):
-                    raise ValueError("Unexpected issue data")
-                labels = {label.get("name") for label in issue.get("labels", []) if isinstance(label, dict)}
+            for issue in ready_metadata(repo):
+                labels = {label["name"] for label in issue["labels"]}
                 if "status:ready" not in labels or labels.intersection(
                         {"status:blocked", "status:in-progress", "status:awaiting-merge"}):
                     continue
@@ -193,6 +204,73 @@ def backlog(repositories: list[str]) -> tuple[list[dict], int]:
             failures += 1
             print(f"GitHub check failed for {repo}: {error}", file=sys.stderr, flush=True)
     return results, failures
+
+
+def queue_report() -> dict:
+    """User-invoked metadata snapshot, without watcher state or eligibility inference."""
+    report = {'schema_version': 1, 'source': 'GitHub gh issue list (open, status:ready)',
+              'complete': True, 'repositories': [],
+              'limits': 'READY_LABEL_CANDIDATE only; ownership, dependencies, blocked comments and recovery/source gates are not evaluated'}
+    try:
+        repos = enrolled()
+    except (OSError, ValueError, RuntimeError):
+        report.update(complete=False, configuration='unavailable',
+                      diagnostic='Enrollment unreadable, unsafe or invalid; inspect configuration privately')
+        repos = []
+    else:
+        report['configuration'] = 'available' if repos else 'no_enrolled_repositories'
+    for repo in repos:
+        entry = {'repository': repo, 'status': 'failed', 'candidates': [], 'observed_at': None,
+                 'source_age_seconds': None}
+        try:
+            issues = ready_metadata(repo)
+            entry['observed_at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+            entry['status'] = 'incomplete' if len(issues) >= 1000 else 'complete'
+            if entry['status'] == 'incomplete':
+                entry['diagnostic'] = 'Read reached the 1000-issue limit; more candidates may exist'
+            for issue in issues:
+                labels = {label['name'] for label in issue['labels']}
+                if 'status:ready' in labels:
+                    entry['candidates'].append({'number': issue['number'], 'updated_at': issue['updatedAt'],
+                        'classification': 'READY_LABEL_CANDIDATE',
+                        'lifecycle_labels': sorted(labels & {'status:ready', 'status:blocked',
+                                                           'status:in-progress', 'status:awaiting-merge'})})
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError):
+            # Raw tool errors may contain paths, credentials or server response text.
+            entry['diagnostic'] = 'GitHub metadata unavailable; check gh installation, authentication and repository access privately'
+        report['repositories'].append(entry)
+        if entry['status'] != 'complete':
+            report['complete'] = False
+    report['generated_at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+    for entry in report['repositories']:
+        if entry['observed_at']:
+            entry['source_age_seconds'] = max(0, int(time.time() - calendar.timegm(
+                time.strptime(entry['observed_at'], '%Y-%m-%dT%H:%M:%SZ'))))
+    return report
+
+
+def print_queue(as_json=False) -> int:
+    report = queue_report()
+    if as_json:
+        print(json.dumps(report, indent=2))
+    else:
+        print(f"Queue snapshot: {report['generated_at']} | {'complete' if report['complete'] else 'INCOMPLETE'}")
+        print('Source: ' + report['source'])
+        print(report['limits'])
+        if 'diagnostic' in report:
+            print(report['diagnostic'])
+        elif not report['repositories']:
+            print('No enrolled repositories; use repo add owner/name to enroll one')
+        for entry in report['repositories']:
+            count = 'candidate count unknown' if entry['status'] == 'failed' else f"{len(entry['candidates'])} candidates"
+            print(f"{entry['repository']}: {entry['status']} | {count}" +
+                  (f" | source {entry['observed_at']} (age {entry['source_age_seconds']}s)" if entry['observed_at'] else ''))
+            for candidate in entry['candidates']:
+                print(f"  #{candidate['number']} READY_LABEL_CANDIDATE | updated {candidate['updated_at']} | " +
+                      ', '.join(candidate['lifecycle_labels']))
+            if 'diagnostic' in entry:
+                print('  ' + entry['diagnostic'])
+    return 0 if report['complete'] else 1
 
 
 def github(*args: str):
@@ -1466,6 +1544,7 @@ def main() -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("capabilities", help="Versioned OS capability JSON; no runtime ownership inference")
     sub.add_parser("doctor", help="Read-only accounts-free local preflight; no dispatch").add_argument("--json", action="store_true")
+    sub.add_parser("queue", help="Read current GitHub ready-label candidates; no dispatch").add_argument("--json", action="store_true")
     sub.add_parser("status", help="Read local post-run disposition diagnostics; no network or inference").add_argument("--details", action="store_true")
     sub.add_parser("library", help="Show effective Markdown paths and override precedence").add_argument(
         "--explain", action="store_true", help="Read-only provenance JSON; omit absolute paths and contents")
@@ -1484,6 +1563,8 @@ def main() -> int:
             print(json.dumps(platform.capabilities()))
         elif args.command == "doctor":
             print_doctor(args.json)
+        elif args.command == "queue":
+            return print_queue(args.json)
         elif args.command == "status":
             run_status(args.details)
         elif args.command == "library":
