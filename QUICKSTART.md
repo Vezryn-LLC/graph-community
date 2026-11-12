@@ -222,6 +222,26 @@ includes `generated_at`, `complete`, configuration status and per-repository
 status, observation time, age and candidates. Raw errors, local paths and credentials
 are withheld. Invalid or duplicate enrollment is reported without reading GitHub.
 
+On current main, `python3 -B watcher.py queue --explain` (add `--json` for structured
+output) optionally reads bounded issue bodies/comments, native dependencies and
+closing PRs. This feature is unreleased and absent from v0.1.1. Each candidate has
+an observed time, `candidate`, `blocked` or `unknown`, finite reason codes and
+only enrolled-repository issue/PR links. Conflicting lifecycle labels and verified
+open dependencies/closing PRs are observed blockers. A historical claim, closed
+dependency without verified acceptance, incomplete comments, denied/rate-limited
+reads, changed metadata or unavailable API fields leave uncertainty explicit.
+`candidate` means no blocker was observed within these bounds, never eligibility.
+
+Explanation reads stop at 20 candidates and 20 related issue/PR reads across the
+whole command, with no pagination (20 comments/dependencies/closing PRs and 100
+labels per candidate). Unread candidates are `unknown`; incomplete explanations
+return exit code 1. Failed repositories remain visible with unknown candidate
+counts. Ordinary `queue` keeps its existing metadata reads and output. This is a
+read-only snapshot, not an authoritative live claim, launch guarantee, permission
+grant or product correctness check. The coordinator independently verifies custody,
+dependencies, worker source and authority; reverse links and runtime gates are
+outside this bounded diagnostic. Use `repo check` for repository access preflight.
+
 `queue` looks at current GitHub metadata; `status` describes prior local runs;
 `watch --once` can dispatch real work. Accounts-free verification remains
 `ci/check.py` with fake GitHub responses.

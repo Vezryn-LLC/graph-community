@@ -319,7 +319,7 @@ def backlog(repositories: list[str]) -> tuple[list[dict], int]:
     return results, failures
 
 
-def queue_report() -> dict:
+def queue_report(explain=False) -> dict:
     """User-invoked metadata snapshot, without watcher state or eligibility inference."""
     report = {'schema_version': 1, 'source': 'GitHub gh issue list (open, status:ready)',
               'complete': True, 'repositories': [],
@@ -354,6 +354,8 @@ def queue_report() -> dict:
         report['repositories'].append(entry)
         if entry['status'] != 'complete':
             report['complete'] = False
+    if explain:
+        explain_queue(report)
     report['generated_at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
     for entry in report['repositories']:
         if entry['observed_at']:
@@ -362,8 +364,8 @@ def queue_report() -> dict:
     return report
 
 
-def print_queue(as_json=False) -> int:
-    report = queue_report()
+def print_queue(as_json=False, explain=False) -> int:
+    report = queue_report(explain=explain)
     if as_json:
         print(json.dumps(report, indent=2))
     else:
@@ -381,6 +383,11 @@ def print_queue(as_json=False) -> int:
             for candidate in entry['candidates']:
                 print(f"  #{candidate['number']} READY_LABEL_CANDIDATE | updated {candidate['updated_at']} | " +
                       ', '.join(candidate['lifecycle_labels']))
+                if explain:
+                    detail = candidate['explanation']
+                    print(f"    {detail['classification']} | {', '.join(detail['reasons'])} | observed {detail['observed_at']}")
+                    for link in detail['links']:
+                        print('    ' + link)
             if 'diagnostic' in entry:
                 print('  ' + entry['diagnostic'])
     return 0 if report['complete'] else 1
@@ -600,6 +607,126 @@ def dependency_pages(repo: str, reverse=False, native=True) -> tuple[list, bool,
             raise ValueError('Invalid dependency cursor')
         cursor = next_cursor
     return rows, False, native
+
+
+
+# Opt-in only: at most 20 candidate snapshots and 20 related-object reads total.
+QUEUE_EXPLAIN_LIMIT = 20
+QUEUE_EXPLAIN_FIELDS = """number state updatedAt body
+ labels(first:100){totalCount pageInfo{hasNextPage endCursor} nodes{name}}
+ comments(last:20){totalCount pageInfo{hasNextPage endCursor} nodes{body}}
+ blockedBy(first:20){totalCount pageInfo{hasNextPage endCursor} nodes{url state}}
+ closedByPullRequestsReferences(first:20){totalCount pageInfo{hasNextPage endCursor} nodes{url state}}
+"""
+
+
+def explain_queue(report):
+    """Finite evidence projection, independent of local runtime and dispatch."""
+    report['limits'] = ('Read-only observed snapshot, not authoritative live claim/eligibility, launch guarantee, '
+        'permission grant or product correctness. A coordinator independently verifies custody, dependencies, '
+        'worker source and authority. Reverse links, runtime and acceptance are not audited. '
+        'At most 20 candidates, 20 related reads, 20 comments/dependencies/PRs and 100 labels; no pagination.')
+    report['explanation_limits'] = {'candidates': 20, 'related_reads': 20}
+    allowed = {entry['repository'].lower() for entry in report['repositories']}
+    remaining, related_remaining = QUEUE_EXPLAIN_LIMIT, QUEUE_EXPLAIN_LIMIT
+    for entry in report['repositories']:
+        for candidate in entry['candidates']:
+            reasons, blocked, links = set(), set(), set()
+            repo, number = entry['repository'], candidate['number']
+            detail = {'classification': 'unknown', 'reasons': [], 'links': [], 'observed_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}
+            candidate['explanation'] = detail
+            if not remaining:
+                reasons.add('CANDIDATE_READ_CAP')
+            else:
+                remaining -= 1
+                try:
+                    owner, name = repo.split('/')
+                    query = 'query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){issue(number:$number){' + QUEUE_EXPLAIN_FIELDS + '}}}'
+                    data = dependency_query(query, native=True, owner=owner, name=name, number=number)
+                    raw = data['repository']['issue']
+                    if not isinstance(raw, dict) or raw.get('number') != number:
+                        raise ValueError('Missing snapshot')
+                    detail['observed_at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+                    if raw.get('updatedAt') != candidate['updated_at'] or raw.get('state') != 'OPEN':
+                        reasons.add('STALE_CANDIDATE')
+                    labels, complete = connection(raw.get('labels'))
+                    if not complete or any(not isinstance(v, dict) or not isinstance(v.get('name'), str) for v in labels):
+                        reasons.add('LABELS_INCOMPLETE')
+                    else:
+                        names = {v['name'] for v in labels}
+                        if 'status:ready' not in names:
+                            reasons.add('STALE_CANDIDATE')
+                        if names & {'status:blocked', 'status:in-progress', 'status:awaiting-merge'}:
+                            blocked.add('CONFLICTING_LIFECYCLE_LABELS')
+                    comments, complete = connection(raw.get('comments'))
+                    if not complete or any(not isinstance(v, dict) or not isinstance(v.get('body'), str) for v in comments):
+                        reasons.add('COMMENTS_INCOMPLETE')
+                    texts = [raw.get('body', '')] + [v['body'] for v in comments if isinstance(v, dict) and isinstance(v.get('body'), str)]
+                    if any(text.startswith('Graph claimed —') for text in texts):
+                        # A historical claim is not proof of an outstanding live owner.
+                        reasons.add('CLAIM_REQUIRES_RECONCILIATION')
+                    declaration = dependency_declaration(raw.get('body'))
+                    legacy, legacy_complete = legacy_links(raw, 'Blocked by')
+                    if declaration['mode'] in {'invalid', 'unknown'}:
+                        reasons.add('DEPENDENCY_INTENT_UNKNOWN')
+                    if declaration['mode'] == 'legacy' and not legacy_complete:
+                        reasons.add('DEPENDENCY_INTENT_UNKNOWN')
+                    intended = declaration['refs'] if declaration['mode'] in {'references', 'none'} else legacy
+                    native_refs = set()
+                    for field, kind in [('blockedBy', 'DEPENDENCY'), ('closedByPullRequestsReferences', 'CLOSING_PR')]:
+                        nodes, complete = connection(raw.get(field))
+                        if not complete:
+                            reasons.add(kind + '_READ_INCOMPLETE')
+                        for node in nodes:
+                            url = node.get('url') if isinstance(node, dict) else None
+                            ref = reference(url) if kind == 'DEPENDENCY' else None
+                            match = PR_REF.fullmatch(url) if isinstance(url, str) else None
+                            target = ref[0] if ref else match[1].lower() if match else None
+                            if target not in allowed or node.get('state') not in {'OPEN', 'CLOSED', 'MERGED'}:
+                                reasons.add(kind + '_READ_UNKNOWN')
+                                continue
+                            if ref:
+                                native_refs.add(ref)
+                            if node['state'] == 'OPEN':
+                                blocked.add('OPEN_' + kind)
+                                links.add(url)
+                            elif ref:
+                                reasons.add('DEPENDENCY_ACCEPTANCE_UNVERIFIED')
+                    if declaration['mode'] in {'references', 'none'} and native_refs - set(intended or []):
+                        reasons.add('DEPENDENCY_INTENT_MISMATCH')
+                    # Current declared/legacy issue links missing from native fields need exact reads.
+                    refs = [('issue', r, n) for r, n in sorted(set(intended or []) - native_refs)]
+                    # Existing prose PR references are hints only until their current state is read.
+                    refs += [('pr', r.lower(), int(n)) for r, n in sorted(set(PR_REF.findall('\n'.join(texts))))]
+                    for kind, target, n in refs[:21]:
+                        if target not in allowed:
+                            reasons.add('RELATED_SCOPE_UNAVAILABLE')
+                            continue
+                        if related_remaining <= 0:
+                            reasons.add('RELATED_READ_CAP')
+                            continue
+                        related_remaining -= 1
+                        try:
+                            row = github(kind, 'view', str(n), '--repo', target, '--json', 'state')
+                            if not isinstance(row, dict) or row.get('state') not in {'OPEN', 'CLOSED', 'MERGED'}:
+                                raise ValueError('Missing related state')
+                            if row['state'] == 'OPEN':
+                                (blocked if kind == 'issue' else reasons).add('OPEN_DEPENDENCY' if kind == 'issue' else 'REFERENCED_PR_REQUIRES_RECONCILIATION')
+                                links.add(f'https://github.com/{target}/{"issues" if kind == "issue" else "pull"}/{n}')
+                            elif kind == 'issue':
+                                reasons.add('DEPENDENCY_ACCEPTANCE_UNVERIFIED')
+                        except (OSError, subprocess.SubprocessError, ValueError):
+                            reasons.add('RELATED_READ_UNAVAILABLE')
+                    if len(refs) > 20:
+                        reasons.add('RELATED_READ_CAP')
+                except NativeDependencyUnsupported:
+                    reasons.add('API_CAPABILITY_UNAVAILABLE')
+                except (OSError, subprocess.SubprocessError, ValueError, TypeError, KeyError):
+                    reasons.add('SNAPSHOT_UNAVAILABLE')
+            detail.update(classification='blocked' if blocked else 'unknown' if reasons else 'candidate',
+                          reasons=sorted(blocked | reasons) or ['NO_OBSERVED_BLOCKER'], links=sorted(links))
+            if reasons:
+                report['complete'] = False
 
 
 def ref_names(refs):
@@ -1769,7 +1896,9 @@ def main() -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("capabilities", help="Versioned OS capability JSON; no runtime ownership inference")
     sub.add_parser("doctor", help="Read-only accounts-free local preflight; no dispatch").add_argument("--json", action="store_true")
-    sub.add_parser("queue", help="Read current GitHub ready-label candidates; no dispatch").add_argument("--json", action="store_true")
+    queue = sub.add_parser("queue", help="Read current GitHub ready-label candidates; no dispatch")
+    queue.add_argument("--json", action="store_true")
+    queue.add_argument("--explain", action="store_true", help="Bounded read-only observed reasons; never eligibility authority")
     status = sub.add_parser("status", help="Read local post-run disposition diagnostics; no network or inference")
     status_format = status.add_mutually_exclusive_group()
     status_format.add_argument("--details", action="store_true")
@@ -1795,7 +1924,7 @@ def main() -> int:
         elif args.command == "doctor":
             print_doctor(args.json)
         elif args.command == "queue":
-            return print_queue(args.json)
+            return print_queue(args.json, args.explain)
         elif args.command == "status":
             run_status(args.details, args.json)
         elif args.command == "library":
