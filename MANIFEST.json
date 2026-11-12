@@ -18,7 +18,7 @@
     },
     "CONTRIBUTING.md": {
       "mode": "0o644",
-      "sha256": "9485561374c8288d789ad1740a69ecbf937e7cedb89fd6b26c4937c1135d9b59"
+      "sha256": "4508a3d62ed48b9b6dd98984df718e7a970c4f55529cded789c7a6967131e453"
     },
     "IMPORT.md": {
       "mode": "0o644",
@@ -64,13 +64,21 @@
       "mode": "0o755",
       "sha256": "bf1bb79eac9833ce5092caffa47c0a73eb2abea4ef51b35399396a726029c795"
     },
+    "ci/archive.py": {
+      "mode": "0o644",
+      "sha256": "42e17da897c08f68cc882bb733162b3137aa268484150427ca4a9248a8a9de39"
+    },
     "ci/check.py": {
       "mode": "0o644",
-      "sha256": "4438694a804e92303754afab204dbea7e83001ed7c8daea4718174af78e54bb1"
+      "sha256": "3885c1799328c4e619725dc2737ac3b62d64f2ef609a6c2b08d9d22dd5add12c"
     },
     "ci/smoke.yml.example": {
       "mode": "0o644",
       "sha256": "b6c451f85e59e0d6502b58b5cab2f6b0de7c8ba649a5f8effb73f9d16300beb3"
+    },
+    "ci/test_archive.py": {
+      "mode": "0o644",
+      "sha256": "6871517acecefa8acf25e0077f9730eda8363c982c8ddd1b38d64234f8132415"
     },
     "ci/test_doctor.py": {
       "mode": "0o644",
