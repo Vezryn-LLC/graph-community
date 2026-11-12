@@ -38,7 +38,7 @@
     },
     "QUICKSTART.md": {
       "mode": "0o644",
-      "sha256": "a4f2a4063e18a82214bb100f135a515ef78cf2f27e6ae9e1a8dea83cd34cd529"
+      "sha256": "c9e540b2dc439f051a3125c38d71be2ae3603cd83c9df752686336c996f3018f"
     },
     "README.md": {
       "mode": "0o644",
@@ -62,11 +62,11 @@
     },
     "bin/graph": {
       "mode": "0o755",
-      "sha256": "31363acaa2fbea1e6dab2cf4ca3814fa25018adbeda93956c250090ed2e4bcbe"
+      "sha256": "649d2ee47232ca87b1af4a2ae59833595447b2ed2d709c0b9e06054281f1d760"
     },
     "ci/check.py": {
       "mode": "0o644",
-      "sha256": "3762afe6b1c1a8addacd97a83ffd76ad65c917dd83ca550121cd84a2007df46d"
+      "sha256": "c1cec7d58b032208261c6bfda9d31c24e7b626c4a07bcb5cef58f3d52ea004cd"
     },
     "ci/smoke.yml.example": {
       "mode": "0o644",
@@ -79,6 +79,10 @@
     "ci/test_library.py": {
       "mode": "0o644",
       "sha256": "ad774ec4bf40fda5c7912dacdd896365a9d7bd8bc509cdc69cda829cb3db6afc"
+    },
+    "ci/test_queue.py": {
+      "mode": "0o644",
+      "sha256": "6245feb62acbe39b6c485d42cfea842b27a8dd056c91f2a4d9b8abcb3764eaa9"
     },
     "docs/GUIDANCE-REVIEW.md": {
       "mode": "0o644",
@@ -298,7 +302,7 @@
     },
     "watcher.py": {
       "mode": "0o644",
-      "sha256": "50c5242ec973eb8e77b035d5dc5281fe7a13754b10a3944ad90aab429578c252"
+      "sha256": "1da89ea9afb39168d7371b79bef44fe8afd97e05f53a03df559a0a40c32a5fda"
     }
   },
   "package": "graph-community",
