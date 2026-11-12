@@ -38,7 +38,7 @@
     },
     "QUICKSTART.md": {
       "mode": "0o644",
-      "sha256": "24488e9cb78d8030a7d6cb0b04c37667e46e45336118f41025a3d598c6b686c5"
+      "sha256": "a4f2a4063e18a82214bb100f135a515ef78cf2f27e6ae9e1a8dea83cd34cd529"
     },
     "README.md": {
       "mode": "0o644",
@@ -66,11 +66,15 @@
     },
     "ci/check.py": {
       "mode": "0o644",
-      "sha256": "3922f7718ec52f2202ee6ba43a1d19fd867772ed5a18bf5654fda8699cfdc454"
+      "sha256": "3762afe6b1c1a8addacd97a83ffd76ad65c917dd83ca550121cd84a2007df46d"
     },
     "ci/smoke.yml.example": {
       "mode": "0o644",
       "sha256": "b6c451f85e59e0d6502b58b5cab2f6b0de7c8ba649a5f8effb73f9d16300beb3"
+    },
+    "ci/test_doctor.py": {
+      "mode": "0o644",
+      "sha256": "f0a8d1b1a9619f6f928de4d71d71f0bdc2043359234643d3e14a76458748381a"
     },
     "ci/test_library.py": {
       "mode": "0o644",
@@ -294,7 +298,7 @@
     },
     "watcher.py": {
       "mode": "0o644",
-      "sha256": "6dd7bf2599f74f4dac86ecc15c6d8309b3e7381e898ac074bc2d000debc453fb"
+      "sha256": "d5b02c9a83805789242415a31943c813c14fb6e6e6843621e385c8d5760dc060"
     }
   },
   "package": "graph-community",

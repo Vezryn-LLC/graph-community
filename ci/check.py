@@ -35,6 +35,7 @@ PAYLOAD_FILES = frozenset({
     'ci/check.py',
     'ci/smoke.yml.example',
     'ci/test_library.py',
+    'ci/test_doctor.py',
     'docs/GUIDANCE-REVIEW.md',
     'docs/LIBRARY.md',
     'docs/wiki/Community-and-Upkeep.md',
@@ -184,7 +185,7 @@ def main():
                    VEZRYN_GRAPH_LIBRARY=str(home / 'library'), PYTHONDONTWRITEBYTECODE='1',
                    GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM='1', GIT_CEILING_DIRECTORIES=str(ROOT.parent))
         for args in (['-c', 'import watcher,library,graph_platform,graph_update,graph_macos,graph_windows,graph_windows_native'],
-                     ['watcher.py', 'capabilities'], ['watcher.py', 'repo', 'list'],
+                     ['watcher.py', 'capabilities'], ['watcher.py', 'doctor', '--json'], ['watcher.py', 'repo', 'list'],
                      ['graph_update.py', 'version', '--json'], ['smoke.py'],
                      ['-m', 'unittest', 'discover', '-s', 'ci', '-p', 'test_*.py', '-v']):
             subprocess.run([sys.executable, '-B', *args], cwd=ROOT, env=env, check=True, timeout=30)
