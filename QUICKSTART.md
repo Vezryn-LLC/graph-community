@@ -142,6 +142,26 @@ bin/graph uninstall
 ```
 
 The unit is `graph-community.service` and CLI link is `~/.local/bin/graph`.
+Linux install records the resolved absolute `VEZRYN_GRAPH_CONFIG`,
+`VEZRYN_GRAPH_STATE` and `VEZRYN_GRAPH_LIBRARY` paths, including their defaults.
+Use the same profile when enrolling repositories and installing, starting,
+stopping or uninstalling the service. For example, export these before the
+commands above and keep them selected for later control:
+
+```sh
+export VEZRYN_GRAPH_CONFIG="$HOME/graph profile/repos.toml"
+export VEZRYN_GRAPH_STATE="$HOME/graph profile/state"
+export VEZRYN_GRAPH_LIBRARY="$HOME/graph profile/library"
+```
+
+Mismatched controls fail before writing the other profile's state. To change
+profiles, request drain with the installed profile, wait for verified idle, then
+install again with the new selection. Old PATH-only units have no verified
+profile: controls refuse them rather than guessing. Identify the original
+watcher's state path and request its stop marker before reinstalling while idle;
+do not substitute the newly selected shell's state path. An owned unit changed on
+disk also needs its loaded manager identity reconciled before control.
+
 Foreign/modified installation entries or active/unknown services are refused.
 Uninstall removes only owned unit/link, preserving source, enrollment, config,
 journals, claims and worktrees. Failed manager reload rolls back owned files;
