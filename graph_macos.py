@@ -386,10 +386,12 @@ def uninstall():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
-    for name in ('install', 'start', 'stop', 'logs', 'uninstall', 'capabilities', 'version', 'check-update', 'apply-update', 'library', '_run-agent'):
+    for name in ('install', 'start', 'stop', 'logs', 'uninstall', 'capabilities', 'version', 'check-update', 'apply-update', 'doctor', 'queue', 'library', '_run-agent'):
         command_parser = sub.add_parser(name)
-        if name in ('version', 'check-update', 'apply-update'):
+        if name in ('version', 'check-update', 'apply-update', 'doctor', 'queue'):
             command_parser.add_argument('--json', action='store_true')
+        if name == 'library':
+            command_parser.add_argument('--explain', action='store_true')
     sub.add_parser('status').add_argument('--json', action='store_true')
     repo = sub.add_parser('repo')
     repo.add_argument('args', nargs=argparse.REMAINDER)
@@ -400,9 +402,9 @@ def main():
             return 0
         if platform.platform_name() != 'macos':
             raise RuntimeError('This experimental runner requires macOS; use bin/graph on Linux')
-        if args.command in ('version', 'check-update', 'apply-update', 'repo', 'library'):
+        if args.command in ('version', 'check-update', 'apply-update', 'repo', 'doctor', 'queue', 'library'):
             file = 'graph_update.py' if args.command in ('version', 'check-update', 'apply-update') else 'watcher.py'
-            extra = args.args if args.command == 'repo' else ['--json'] if getattr(args, 'json', False) else []
+            extra = args.args if args.command == 'repo' else ['--explain'] if getattr(args, 'explain', False) else ['--json'] if getattr(args, 'json', False) else []
             return subprocess.call([sys.executable, '-B', str(ROOT / file), args.command, *extra])
         if args.command == 'status':
             value = status()
