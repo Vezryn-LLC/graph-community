@@ -4,7 +4,7 @@ Welcome to the graph-community wiki!
 
 Graph Community helps turn a bounded GitHub issue into ordinary engineering work with native Codex. You choose the repositories, supply your own authenticated tools and retain authority over their actions. The coordinator reads an eligible issue, delegates implementation to an isolated worker, and records validation and PR disposition in GitHub.
 
-Start with the [accounts-free local check](https://github.com/Vezryn-LLC/graph-community/blob/main/QUICKSTART.md#local-check-without-accounts-or-services). It requires no GitHub sign-in, model call or service installation. Before trying real work, read the same Quickstart's prerequisites and native-host qualification steps.
+Start with the [version choice, acquisition and local check](https://github.com/Vezryn-LLC/graph-community/blob/main/QUICKSTART.md#acquire-source-and-make-a-fresh-runtime-copy). It requires no GitHub sign-in, model call or service installation. Before trying real work, read the same Quickstart's prerequisites and native-host qualification steps.
 
 ## Pick a task
 
