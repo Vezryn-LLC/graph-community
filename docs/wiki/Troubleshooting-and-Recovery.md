@@ -19,3 +19,17 @@ The [architecture](https://github.com/Vezryn-LLC/graph-community/blob/main/ARCHI
 Include version or commit/manifest digest, OS, Python/native client versions, expected versus observed behavior and a minimal reproduction. Redact credentials, private repository contents and operational logs before posting a public issue. Follow [CONTRIBUTING.md](https://github.com/Vezryn-LLC/graph-community/blob/main/CONTRIBUTING.md) for ordinary reports and [SECURITY.md](https://github.com/Vezryn-LLC/graph-community/blob/main/SECURITY.md) for confidential vulnerabilities.
 
 Do not publish personal paths or raw runtime state to explain a failure. Say what is unverified and retain the sensitive evidence privately.
+
+## Ready label but no dispatch
+
+On current main, try `python3 -B watcher.py queue --explain --json` for a bounded,
+read-only observed snapshot. It reports `candidate / blocked / unknown` and finite
+reason codes without exposing raw comments or native worker identities. Check
+conflicting lifecycle labels, open prerequisites/closing PRs and uncertain claims
+against their existing issue/PR records. An incomplete or denied read is unknown,
+not an empty queue; use `repo check` to diagnose access privately. No result grants
+permission or guarantees launch. The coordinator must independently verify current
+ownership, dependencies, worker source and authority. See the
+[Quickstart bounds](https://github.com/Vezryn-LLC/graph-community/blob/main/QUICKSTART.md)
+for caps and limitations. This feature is unreleased on main and absent from
+v0.1.1; use that tag's documentation for an installed v0.1.1 package.
