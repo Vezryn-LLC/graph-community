@@ -31,6 +31,9 @@ Choose one path below. As observed on 2026-11-12, the published release is
 **v0.1.1**. It has `ci/check.py`, `capabilities` and `smoke.py`, but **no doctor,
 queue or first-issue fixture**. The pinned current-source route includes those
 newer features; they are **unreleased**, not additions to v0.1.1.
+For the complete v0.1.2 preparation snapshot, use the
+[candidate reproduction instructions](RELEASE-NOTES-v0.1.2.md#reproduce-this-source-candidate)
+and exact source SHA recorded in its PR; there are no v0.1.2 release downloads.
 
 These commands need Python 3.11+, internet access and (for source) Git, but no
 GitHub sign-in, Codex account or running Graph process. Run them in a **new empty
