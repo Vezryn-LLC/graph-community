@@ -10,7 +10,13 @@ Codex coordinate implementation and verification through your existing PR workfl
 **[Try the Quickstart](QUICKSTART.md)** ·
 [Latest public release](https://github.com/Vezryn-LLC/graph-community/releases/latest) ·
 [Architecture](ARCHITECTURE.md) · [Platform limits](PLATFORMS.md) ·
-[Contribute](CONTRIBUTING.md)
+[Contribute](CONTRIBUTING.md) · [Wiki tutorial sources](docs/wiki/Home.md)
+
+The six Wiki tutorials and navigation are ready for publication. The separate
+[GitHub Wiki](https://github.com/Vezryn-LLC/graph-community/wiki) still needs its
+first Home page saved by a repository writer; these source files are not proof of
+a live Wiki. [Issue #11](https://github.com/Vezryn-LLC/graph-community/issues/11)
+tracks that one-time initialization and remote-page verification.
 
 ## How work moves
 

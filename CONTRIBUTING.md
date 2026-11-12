@@ -110,6 +110,20 @@ change, please check or open an issue first so you don't duplicate work.
 Please keep user data, credentials, private histories and sensitive logs out
 of public issues and PRs.
 
+## Documentation upkeep
+
+When a PR changes user-visible commands, installation, platform behavior,
+configuration, playbooks, troubleshooting or security guidance, update the affected
+source-controlled documentation in that PR, or explain why no docs change is needed.
+This is part of the change, not a separate approval gate.
+
+The repository maintainers own the task-oriented Wiki. Its reviewed tutorial source
+is in [docs/wiki](docs/wiki/Home.md); installation, architecture, platform, security
+and CLI references remain in their canonical repository documents. Suggest Wiki
+corrections through the existing issue/PR flow. Before publishing reviewed tutorial
+changes to the separate Wiki repository, reconcile its current contents rather than
+overwriting other contributors' work, then inspect actual remote pages/navigation.
+
 ## Release preparation
 
 Keep existing releases and their artifacts immutable. A merged PR is not release
@@ -121,3 +135,9 @@ qualification just for Markdown additions. Recheck an affected boundary when a
 runtime change invalidates earlier evidence. Do not enable paid CI, change
 repository visibility, deploy or grant account access without that action's
 specific authority. No package registry or new release engine is needed.
+
+On an actual Community release, inspect affected Wiki tutorials, Home's version
+statement, platform/support claims and links. Publish only corrections warranted by
+that release and verify the remote result. A source PR merge does not update the
+Wiki automatically. Use normal release/issue work to repair confirmed drift; no
+recurring AI scan or documentation publishing service is required.
