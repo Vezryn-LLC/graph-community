@@ -45,6 +45,8 @@ authenticated terminal recording or proof of a particular delivery.
 ## Try it or help improve it
 
 Start with the Quickstart's [accounts-free local check](QUICKSTART.md#local-check-without-accounts-or-services).
+Then try the [tiny local first-issue exercise](examples/first-issue/README.md),
+with an exact request and a deliberately missing behavior to implement.
 Real GitHub work additionally needs your authenticated tools, permissions and
 qualified native client. Enrollment limits discovery; it grants no access, and
 opening an issue does not automatically enqueue a worker.
