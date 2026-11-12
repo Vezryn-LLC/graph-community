@@ -15,13 +15,13 @@ Codex coordinate implementation and verification through your existing PR workfl
 ## How work moves
 
 ```text
-Enrolled repository + actionable ready issue
-                    ↓
-Native Codex coordinator reads and claims the original issue
-                    ↓
-Native workers implement in isolated branches/worktrees
-                    ↓
-Affected checks → ordinary GitHub PR and recorded outcome
+Enrolled repo + ready issue
+             ↓
+Codex reads + claims original issue
+             ↓
+Isolated workers implement + check
+             ↓
+Ordinary GitHub PR + recorded outcome
 ```
 
 - **Keep the work in GitHub.** Original issues, claims, blockers and PRs remain
