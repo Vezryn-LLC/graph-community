@@ -18,7 +18,7 @@
     },
     "CONTRIBUTING.md": {
       "mode": "0o644",
-      "sha256": "2b907053e8a66ab9409910b0a1ad29a3e37c77fa1e9b7715c7448c67498a180d"
+      "sha256": "9485561374c8288d789ad1740a69ecbf937e7cedb89fd6b26c4937c1135d9b59"
     },
     "IMPORT.md": {
       "mode": "0o644",
@@ -42,7 +42,7 @@
     },
     "README.md": {
       "mode": "0o644",
-      "sha256": "282dbaa74790e6f59fac4d95c941ce790985ac37ff4c3a157551d334aa6dec41"
+      "sha256": "0c5c51869b87766952da1d2f9de25cea0b2c8fa1c46ae33d5b2d5e5ee5752274"
     },
     "RELEASE-NOTES-v0.1.0.md": {
       "mode": "0o644",
@@ -66,7 +66,7 @@
     },
     "ci/check.py": {
       "mode": "0o644",
-      "sha256": "2a23b1b2d0b9ef9ea472d52399562e415f2715be3c6f526237c69ff3fdb9a127"
+      "sha256": "3922f7718ec52f2202ee6ba43a1d19fd867772ed5a18bf5654fda8699cfdc454"
     },
     "ci/smoke.yml.example": {
       "mode": "0o644",
@@ -83,6 +83,34 @@
     "docs/LIBRARY.md": {
       "mode": "0o644",
       "sha256": "3653a23305d83598fa76abb648a5b295a15e91e80379724bebf9f0f736e7ce6a"
+    },
+    "docs/wiki/Community-and-Upkeep.md": {
+      "mode": "0o644",
+      "sha256": "ef11a1887e724589a76f8e526a7434f238fa288b839df2290a891aa389ae3f8b"
+    },
+    "docs/wiki/Enrollment-and-Readiness.md": {
+      "mode": "0o644",
+      "sha256": "4d18091588baa8720a60069f05bd687ec0db21d249059cdd4e10ae00e63a08c6"
+    },
+    "docs/wiki/First-Workflow.md": {
+      "mode": "0o644",
+      "sha256": "04424fdeefef7363e9c88177d3358e13bf5fd8f068da743db4467b42f6847254"
+    },
+    "docs/wiki/Home.md": {
+      "mode": "0o644",
+      "sha256": "df60748e0b28eb8d9d35535947e769c1434fe1e26a9f062ad6f96c3d234c9b30"
+    },
+    "docs/wiki/Playbooks-and-Skills.md": {
+      "mode": "0o644",
+      "sha256": "06b63cc6075fd74618576818e4416819926206bdc09fcdd8134bd04db55cd53c"
+    },
+    "docs/wiki/Troubleshooting-and-Recovery.md": {
+      "mode": "0o644",
+      "sha256": "a80d3bb21ad020ddcac95dff61536d40c27fd2a9845c4947abcb708a91a10d54"
+    },
+    "docs/wiki/_Sidebar.md": {
+      "mode": "0o644",
+      "sha256": "628660ae57d51b0a346b8c095c527b3bb8e55f7f3870c852d2203034a2133424"
     },
     "graph_macos.py": {
       "mode": "0o755",
