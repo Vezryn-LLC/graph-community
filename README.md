@@ -7,7 +7,7 @@ you explicitly enroll and are authorized to work in. Bring a bounded issue and
 your own GitHub/Codex tools; Graph watches for actionable work, then lets native
 Codex coordinate implementation and verification through your existing PR workflow.
 
-**[Try the Quickstart](QUICKSTART.md)** ·
+**[Install and try the Quickstart](QUICKSTART.md#acquire-source-and-make-a-fresh-runtime-copy)** ·
 [Latest public release](https://github.com/Vezryn-LLC/graph-community/releases/latest) ·
 [Architecture](ARCHITECTURE.md) · [Platform limits](PLATFORMS.md) ·
 [Contribute](CONTRIBUTING.md) · [Wiki](https://github.com/Vezryn-LLC/graph-community/wiki)
@@ -44,8 +44,9 @@ authenticated terminal recording or proof of a particular delivery.
 
 ## Try it or help improve it
 
-Start with the Quickstart's [accounts-free local check](QUICKSTART.md#local-check-without-accounts-or-services).
-Then try the [tiny local first-issue exercise](examples/first-issue/README.md),
+Start with the Quickstart's [version choice, acquisition and fresh runtime copy](QUICKSTART.md#acquire-source-and-make-a-fresh-runtime-copy).
+v0.1.1 uses its tagged guide; doctor, queue and the exercise are currently unreleased.
+For the pinned current-source path, try the [tiny local first-issue exercise](examples/first-issue/README.md),
 with an exact request and a deliberately missing behavior to implement.
 Real GitHub work additionally needs your authenticated tools, permissions and
 qualified native client. Enrollment limits discovery; it grants no access, and

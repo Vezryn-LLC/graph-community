@@ -38,11 +38,11 @@
     },
     "QUICKSTART.md": {
       "mode": "0o644",
-      "sha256": "32ccaaa3bb8b301696f54f9be79d37c12a80e12ab9ba6f85c13f3041ca0c76b1"
+      "sha256": "2a725e94dca43093c090b6a06bfec031c4154ab1307256b7bd9895044f677c83"
     },
     "README.md": {
       "mode": "0o644",
-      "sha256": "541cabb75684561c14574dfdeddd173ee07b0752a90f15c1d7e2953573ab3a60"
+      "sha256": "414d2d77d08293dfd8e2a5451c5a98af21015baf9e22be2d635d3b588b1c1f58"
     },
     "RELEASE-NOTES-v0.1.0.md": {
       "mode": "0o644",
@@ -146,11 +146,11 @@
     },
     "docs/wiki/First-Workflow.md": {
       "mode": "0o644",
-      "sha256": "ff0964a465fa76c126696facdf1a466d0328c3eb92638c94ac57c3659b7ac5d2"
+      "sha256": "e7543da55b735f8e1afe78cc7f984d531ebe0e757eaede5de75e30d937e88980"
     },
     "docs/wiki/Home.md": {
       "mode": "0o644",
-      "sha256": "eae532275e73912579f19b7eb1713a4dd052cce3ab2205688c44d22037e935a2"
+      "sha256": "b9061d532eae48adfceb6db3003747d8482fa1fc5519d19695be56626559bba9"
     },
     "docs/wiki/Playbooks-and-Skills.md": {
       "mode": "0o644",

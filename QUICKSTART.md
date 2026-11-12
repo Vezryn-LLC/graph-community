@@ -25,9 +25,123 @@ installations resolve directly to their native payload so Node cannot discard
 the inherited watcher lock. Unknown script wrappers or missing/nonexecutable
 native payloads are rejected; Graph does not fall back to an unqualified wrapper.
 
+## Acquire source and make a fresh runtime copy
+
+Choose one path below. As observed on 2026-11-12, the published release is
+**v0.1.1**. It has `ci/check.py`, `capabilities` and `smoke.py`, but **no doctor,
+queue or first-issue fixture**. The pinned current-source route includes those
+newer features; they are **unreleased**, not additions to v0.1.1.
+
+These commands need Python 3.11+, internet access and (for source) Git, but no
+GitHub sign-in, Codex account or running Graph process. Run them in a **new empty
+directory outside any existing checkout/runtime**. Do not copy an installation
+that has already been used. If a command fails, stop before the next command.
+
+### Published v0.1.1
+
+On Linux/macOS, open a terminal in your chosen parent directory:
+
+```sh
+mkdir graph-local-release
+cd graph-local-release
+python3 -c "from urllib.request import urlretrieve; base='https://github.com/Vezryn-LLC/graph-community/releases/download/v0.1.1/'; [urlretrieve(base+n,n) for n in ('graph-community-v0.1.1.tar.gz','SHA256SUMS','MANIFEST.json')]"
+python3 -c "from pathlib import Path; import hashlib; sums=Path('SHA256SUMS').read_bytes(); assert hashlib.sha256(sums).hexdigest() == '845dd4d7f8ec98c6aa8442c97b8058a988d6a314d8b797148ec1371b27ba6348'; expected=dict(line.split()[::-1] for line in sums.decode().splitlines()); assert all(hashlib.sha256(Path(n).read_bytes()).hexdigest()==expected[n] for n in ('graph-community-v0.1.1.tar.gz','MANIFEST.json')); print('Release checksums match')"
+python3 -c "import shutil; shutil.unpack_archive('graph-community-v0.1.1.tar.gz','source')"
+python3 -c "from pathlib import Path; assert Path('source/graph-community-v0.1.1/MANIFEST.json').read_bytes()==Path('MANIFEST.json').read_bytes(); print('Embedded manifest matches')"
+python3 -c "import shutil; shutil.copytree('source/graph-community-v0.1.1','runtime')"
+cd runtime
+python3 -B ci/check.py
+python3 -B watcher.py capabilities
+python3 -B smoke.py
+```
+
+On native Windows PowerShell, from your chosen parent directory:
+
+```powershell
+New-Item -ItemType Directory graph-local-release -ErrorAction Stop
+Set-Location graph-local-release
+$Python = (Get-Command python.exe).Source
+& $Python -c "from urllib.request import urlretrieve; base='https://github.com/Vezryn-LLC/graph-community/releases/download/v0.1.1/'; [urlretrieve(base+n,n) for n in ('graph-community-v0.1.1.tar.gz','SHA256SUMS','MANIFEST.json')]"
+& $Python -c "from pathlib import Path; import hashlib; sums=Path('SHA256SUMS').read_bytes(); assert hashlib.sha256(sums).hexdigest() == '845dd4d7f8ec98c6aa8442c97b8058a988d6a314d8b797148ec1371b27ba6348'; expected=dict(line.split()[::-1] for line in sums.decode().splitlines()); assert all(hashlib.sha256(Path(n).read_bytes()).hexdigest()==expected[n] for n in ('graph-community-v0.1.1.tar.gz','MANIFEST.json')); print('Release checksums match')"
+& $Python -c "import shutil; shutil.unpack_archive('graph-community-v0.1.1.tar.gz','source')"
+& $Python -c "from pathlib import Path; assert Path('source/graph-community-v0.1.1/MANIFEST.json').read_bytes()==Path('MANIFEST.json').read_bytes(); print('Embedded manifest matches')"
+& $Python -c "import shutil; shutil.copytree('source/graph-community-v0.1.1','runtime')"
+Set-Location runtime
+& $Python -B .\ci\check.py
+& $Python -B .\watcher.py capabilities
+& $Python -B .\smoke.py
+```
+
+Expected: `Release checksums match`, `Embedded manifest matches`, then a package
+check ending in `"local_check": "PASS"` and passing primitive smoke. The archive
+SHA-256 is `9611439143d5eaf9840b29b8a7ce8ddd42643b50a3a215c5ba5e3a8558646dda`.
+The checksum-list digest above pins the published list rather than trusting a
+freshly downloaded list alone. The separate manifest is compared to the embedded
+one; `ci/check.py` checks the payload against it.
+
+Continue only with the **[v0.1.1 tagged Quickstart](https://github.com/Vezryn-LLC/graph-community/blob/v0.1.1/QUICKSTART.md)**
+and its [tagged platform limits](https://github.com/Vezryn-LLC/graph-community/blob/v0.1.1/PLATFORMS.md).
+You have already completed that guide's local check. Stop here for an accounts-free
+release trial; do not run the newer commands or exercise below against v0.1.1.
+
+### Pinned current source (unreleased)
+
+The observed public `main` revision is
+[`594629f7e8860e1fdc40e934b31ac7dd82d873ac`](https://github.com/Vezryn-LLC/graph-community/tree/594629f7e8860e1fdc40e934b31ac7dd82d873ac).
+Use that exact commit for this trial, rather than assuming today's moving `main`
+is identical. This route consumes Git's ordinary tracked-file archive; it does
+not modify or replace any published release or producer archive.
+
+Linux/macOS, from your chosen parent directory:
+
+```sh
+mkdir graph-local-source
+cd graph-local-source
+git clone https://github.com/Vezryn-LLC/graph-community.git source
+git -C source checkout --detach 594629f7e8860e1fdc40e934b31ac7dd82d873ac
+git -C source rev-parse HEAD
+git -C source archive --format=tar --output=../payload.tar HEAD
+python3 -c "import shutil; shutil.unpack_archive('payload.tar','runtime')"
+cd runtime
+```
+
+Native Windows PowerShell, from your chosen parent directory:
+
+```powershell
+New-Item -ItemType Directory graph-local-source -ErrorAction Stop
+Set-Location graph-local-source
+$Python = (Get-Command python.exe).Source
+git clone https://github.com/Vezryn-LLC/graph-community.git source
+git -C source checkout --detach 594629f7e8860e1fdc40e934b31ac7dd82d873ac
+git -C source rev-parse HEAD
+git -C source archive --format=tar --output=../payload.tar HEAD
+& $Python -c "import shutil; shutil.unpack_archive('payload.tar','runtime')"
+Set-Location runtime
+```
+
+Confirm the printed HEAD is the exact pinned commit. Git archive includes tracked
+dotfiles such as `.codex/hooks.json` and executable file modes, excludes `.git`
+and untracked/ignored runtime state, and does not follow another checkout's Git
+store. The release archive likewise contains only its published payload.
+`shutil.copytree` includes dotfiles and uses `copy2` to preserve payload modes on
+POSIX; Windows does not provide equivalent POSIX mode evidence. Keep `source`
+pristine and run only from the fresh sibling `runtime`, never overlaying an old
+runtime. Later profiles, journals and enrollment belong outside pristine source.
+
+Hashes and the Git commit identify expected bytes and detect mismatch. They are
+**integrity evidence, not publisher signatures**: trust in the repository, HTTPS
+origin and the source of these expected digests is still required. Neither the
+manifest nor a clean check proves authenticity, account rights or native hooks.
+Do not execute an unexpected download just because its own manifest agrees.
+
+Continue with the local check below and the existing first-issue walkthrough.
+For later revisions, use the guide shipped with that revision and recheck its
+capabilities; this pinned trial does not claim to follow future `main` changes.
+
 ## Local check, without accounts or services
 
-From the runtime copy on Linux or Mac:
+For the pinned unreleased source above, you are now in `graph-local-source/runtime`.
+On Linux or Mac:
 
 ```sh
 python3 --version
@@ -51,7 +165,11 @@ $Python = (Get-Command python.exe).Source
 `ci/check.py` checks manifest bytes/completeness, compiles Python in memory, imports
 entrypoints and executes the local primitive smoke in fresh temporary state. It
 uses no GitHub/Codex credentials, enrollment, service manager or model call.
-A passing smoke proves only the operations named in its output.
+A passing smoke proves only the operations named in its output. The acquisition,
+copy and local checks here were exercised on Linux x86_64 with Python 3.14.7.
+The macOS and PowerShell forms have not been run on native hosts for this
+documentation change; existing native-platform limits in [PLATFORMS.md](PLATFORMS.md)
+remain in force.
 
 For a tiny executable task before any account setup, try the
 [local first-issue example](examples/first-issue/README.md). Its baseline passes
