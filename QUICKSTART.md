@@ -53,6 +53,11 @@ entrypoints and executes the local primitive smoke in fresh temporary state. It
 uses no GitHub/Codex credentials, enrollment, service manager or model call.
 A passing smoke proves only the operations named in its output.
 
+For a tiny executable task before any account setup, try the
+[local first-issue example](examples/first-issue/README.md). Its baseline passes
+and one named acceptance test deliberately fails until you add `--uppercase`.
+The example needs no Graph dispatch; it also explains the optional real PR journey.
+
 `watcher.py doctor` is a read-only, accounts-free local preflight (`--json` for
 structured facts). It discovers tools without running them, checks native Codex
 launcher resolution, safely counts configured repositories without listing them,

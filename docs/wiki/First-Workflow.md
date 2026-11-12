@@ -10,7 +10,9 @@ Before a real trial, follow the Quickstart's prerequisites, lifecycle-label setu
 
 ## 2. Write one bounded issue
 
-For example, ask for a misleading sentence in a small project's README to be corrected. Describe the current sentence, the intended meaning and how a reviewer can recognize success. Avoid a broad request such as “improve the whole product.”
+Try the [local first-issue exercise](https://github.com/Vezryn-LLC/graph-community/tree/main/examples/first-issue) before account setup. It includes a tiny greeting CLI, an exact issue template and focused tests: the default greeting passes, while the requested `--uppercase` test deliberately starts red. Its one-page walkthrough owns the expected fixture outputs and optional disposable-repository journey; these are not an authenticated Graph transcript.
+
+For an optional real trial, commit the unchanged fixture to an authorized disposable private test repository and use its `ISSUE.md` as one bounded request. Do not enroll production repositories. Describe the expected behavior and finite validation; avoid a broad request such as “improve the whole product.”
 
 Check existing issues, PRs and worker ownership first. An authorized maintainer marks the issue `status:ready` only after its dependencies and scope are actionable. [Enrollment and readiness](https://github.com/Vezryn-LLC/graph-community/wiki/Enrollment-and-Readiness) explains why opening an issue is not enough.
 
