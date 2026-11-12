@@ -33,6 +33,8 @@ PAYLOAD_FILES = frozenset({
     'SMOKE-MATRIX.md',
     'bin/graph',
     'ci/check.py',
+    'ci/archive.py',
+    'ci/test_archive.py',
     'ci/smoke.yml.example',
     'ci/test_library.py',
     'ci/test_doctor.py',
@@ -153,18 +155,21 @@ def check_links(root, names):
     return count
 
 
-def main():
-    assert sys.version_info >= (3, 11), 'Python 3.11+ required'
-    expected_arch = os.environ.get('EXPECT_ARCH')
-    assert not expected_arch or platform.machine() == expected_arch, (platform.machine(), expected_arch)
-    manifest = json.loads((ROOT / 'MANIFEST.json').read_text())
+def check_payload(root):
+    """Validate the reviewed source payload and return its exact file bytes."""
+    manifest_path = root / 'MANIFEST.json'
+    assert not manifest_path.is_symlink() and manifest_path.is_file(), 'Invalid manifest file'
+    manifest_bytes = manifest_path.read_bytes()
+    manifest = json.loads(manifest_bytes)
+    contents = {'MANIFEST.json': manifest_bytes}
+    check_content('MANIFEST.json', manifest_bytes)
     assert set(manifest['files']) == PAYLOAD_FILES, sorted(set(manifest['files']) ^ PAYLOAD_FILES)
     expected = PAYLOAD_FILES | {'MANIFEST.json'}
     # Only the checkout's own Git entry is excluded from source payload traversal.
     actual = set()
     directories = {parent.as_posix() for name in expected for parent in Path(name).parents if parent != Path('.')}
-    for path in ROOT.rglob('*'):
-        relative = path.relative_to(ROOT)
+    for path in root.rglob('*'):
+        relative = path.relative_to(root)
         if relative.parts[0] == '.git':
             continue
         assert not path.is_symlink(), str(relative)
@@ -175,13 +180,23 @@ def main():
             actual.add(relative.as_posix())
     assert actual == expected, sorted(actual ^ expected)
     for name, record in manifest['files'].items():
-        path = ROOT / name
-        assert path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest() == record['sha256'], name
+        path = root / name
+        content = path.read_bytes()
+        assert path.is_file() and hashlib.sha256(content).hexdigest() == record['sha256'], name
         if os.name != 'nt':
             assert path.stat().st_mode & 0o777 == int(record['mode'], 8), name
-        check_content(name, path.read_bytes())
+        check_content(name, content)
         if name.endswith('.py'):
-            compile(path.read_bytes(), name, 'exec')
+            compile(content, name, 'exec')
+        contents[name] = content
+    return contents
+
+
+def main():
+    assert sys.version_info >= (3, 11), 'Python 3.11+ required'
+    expected_arch = os.environ.get('EXPECT_ARCH')
+    assert not expected_arch or platform.machine() == expected_arch, (platform.machine(), expected_arch)
+    expected = set(check_payload(ROOT))
     history = check_history(ROOT)
     links = check_links(ROOT, expected)
     with tempfile.TemporaryDirectory(prefix='Community CI spaces ') as temporary:

@@ -126,6 +126,23 @@ overwriting other contributors' work, then inspect actual remote pages/navigatio
 
 ## Release preparation
 
+Build and validate a reproducible source-only candidate from the reviewed checkout:
+
+```sh
+python3 -B ci/archive.py ../graph-community-source.tar
+```
+
+Choose a new output path outside the checkout; existing artifacts are never
+overwritten. The command validates the existing positive payload allowlist and
+manifest, writes a tar with sorted files and fixed timestamps/owners/permissions,
+then checks a fresh extraction through the accounts-free `ci/check.py` import,
+test and smoke path. Its final JSON reports archive and manifest SHA-256 digests.
+Extra source files, links, private markers and stale hashes fail closed. The
+archive includes `MANIFEST.json`; after extracting it separately, users can run
+`python3 -B ci/check.py` again. A history-free archive cannot prove Git ancestry;
+these checks do not establish signature authenticity or native-host qualification.
+This command creates a local artifact only, with no tag, upload or release.
+
 Keep existing releases and their artifacts immutable. A merged PR is not release
 authorization. Record exact source/manifest identity, changed behavior and applicable evidence before
 an owner-authorized tag/release. Source activation remains unavailable.
