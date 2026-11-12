@@ -35,6 +35,7 @@ PAYLOAD_FILES = frozenset({
     'ci/check.py',
     'ci/archive.py',
     'ci/test_archive.py',
+    'ci/test_update.py',
     'ci/smoke.yml.example',
     'ci/test_library.py',
     'ci/test_doctor.py',

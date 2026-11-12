@@ -38,7 +38,7 @@
     },
     "QUICKSTART.md": {
       "mode": "0o644",
-      "sha256": "4302d13235462e2d7cdef68b23343b73117ac8f3ce67f256269ef3ea1e59eac8"
+      "sha256": "b3ba1a5584e195401fae6b0c593cfcb40333b110ee9d8bb9aaf3e800f042ac4d"
     },
     "README.md": {
       "mode": "0o644",
@@ -70,7 +70,7 @@
     },
     "ci/check.py": {
       "mode": "0o644",
-      "sha256": "f438595791af9a542df79bf02fc85cf454a2214d1b8f6426e38ab46bf2f98f55"
+      "sha256": "3a805dfe639e3f7a7f797696a0bf162bb8146843e57f75fd4abcfa3b6f2855ad"
     },
     "ci/smoke.yml.example": {
       "mode": "0o644",
@@ -107,6 +107,10 @@
     "ci/test_status.py": {
       "mode": "0o644",
       "sha256": "1996d904d27491ed22cb4b44e74c835609ef20f8110d58022504d52e3352c4ca"
+    },
+    "ci/test_update.py": {
+      "mode": "0o644",
+      "sha256": "bd1565c331017fbbb578608cc89835e483aa3008ce0f7596f216ce03fcb3bf8b"
     },
     "docs/GUIDANCE-REVIEW.md": {
       "mode": "0o644",
@@ -170,7 +174,7 @@
     },
     "graph_update.py": {
       "mode": "0o644",
-      "sha256": "0827227f1e4db56a727da86d64fe11f373d4ad1d74c72651fe4de16b4384a04f"
+      "sha256": "6025f0fbd6ef7646979cbfc187cc994e34e52c2d56749194ed6c989dced88302"
     },
     "graph_windows.py": {
       "mode": "0o644",

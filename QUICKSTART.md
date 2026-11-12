@@ -232,3 +232,24 @@ Windows hook events now live in the protected state root, outside the writable
 checkout. Existing `.graph/subagent-events.jsonl` history blocks operation until
 its ownership is reconciled; no migration is automatic. Never delete unresolved
 state to make start or uninstall succeed.
+
+### Identify local source
+
+Run `bin/graph version` (or `python3 -B graph_update.py version`) for a readable
+source report; add `--json` for schema version 1. The macOS and Windows wrappers
+forward the same command. `check-update` reports the same local identity and
+continues to report that no reviewed update origin is available.
+
+The report includes the local Git revision and dirty state when available. An
+archive has no Git revision or dirty-state evidence, even inside another checkout.
+The manifest SHA256 identifies the manifest bytes. `verified` means the source
+payload matches the existing archive checker's file, hash, mode and content rules;
+`invalid`, `missing` and `unavailable` do not establish a matching payload.
+This is local consistency evidence, not publisher authentication. A manifest and
+payload can both be changed. Git dirtiness and manifest verification are separate.
+A failed Git read produces unknown values rather than claiming a clean checkout.
+
+Release version remains unknown; release-note filenames do not establish it.
+This report identifies the files on disk, not a running watcher, active source,
+service health or platform qualification. It reads local files and Git only and
+makes no network, service, account or model calls.

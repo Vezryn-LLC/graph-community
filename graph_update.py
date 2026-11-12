@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -92,10 +93,74 @@ def record_launch():
         pass  # Unknown native evidence remains unknown; graceful stop is preserved.
 
 
+def source_identity():
+    """Inspect this source tree only; never use a containing checkout's identity."""
+    source = {'kind': 'git' if (ROOT / '.git').exists() else 'archive',
+              'revision': None, 'dirty': None, 'git_state': 'not-present',
+              'manifest_sha256': None, 'manifest_state': 'missing'}
+    if source['kind'] == 'git':
+        source['git_state'] = 'unavailable'
+        env = {key: value for key, value in os.environ.items() if not key.startswith('GIT_')}
+        env.update(GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=os.devnull,
+                   GIT_OPTIONAL_LOCKS='0', GIT_TERMINAL_PROMPT='0')
+        def inspect(*args):
+            result = subprocess.run((platform.executable('git'), '--no-replace-objects',
+                                     '-c', 'core.fsmonitor=false', *args), cwd=ROOT,
+                                    env=env, capture_output=True, text=True, timeout=5,
+                                    check=True)
+            return result.stdout.strip()
+        try:
+            if Path(inspect('rev-parse', '--show-toplevel')).resolve() == ROOT.resolve():
+                revision = inspect('rev-parse', '--verify', 'HEAD')
+                if re.fullmatch(r'[0-9a-f]{40}|[0-9a-f]{64}', revision):
+                    source['revision'] = revision
+                    source['dirty'] = bool(inspect('status', '--porcelain', '--untracked-files=normal'))
+                    source['git_state'] = 'available'
+        except (OSError, RuntimeError, subprocess.SubprocessError, ValueError):
+            pass  # No Git stderr or local paths in the public report.
+    manifest = ROOT / 'MANIFEST.json'
+    try:
+        if manifest.is_symlink():
+            source['manifest_state'] = 'invalid'
+        elif manifest.exists():
+            source['manifest_state'] = 'invalid'
+            source['manifest_sha256'] = hashlib.sha256(manifest.read_bytes()).hexdigest()
+            # The archive builder and version command share one payload contract.
+            # Its assertions must be enabled before claiming verification.
+            if sys.flags.optimize:
+                source['manifest_state'] = 'unavailable'
+            else:
+                from ci.check import check_payload
+                check_payload(ROOT)
+                source['manifest_state'] = 'verified'
+    except ImportError:
+        source['manifest_state'] = 'unavailable'
+    except (OSError, ValueError, AssertionError, KeyError, TypeError, SyntaxError):
+        source['manifest_state'] = 'invalid'
+    return source
+
+
 def snapshot(check_remote=False):
-    return {**platform.capabilities(), 'summary': 'No reviewed Community update origin',
+    return {**platform.capabilities(), 'schema_version': 1,
+            'package': 'graph-community', 'release_version': None,
+            'source': source_identity(), 'runtime_identity': 'unknown',
+            'summary': 'No reviewed Community update origin',
             'eligible': False, 'service': 'unknown',
             'diagnostic': 'Source activation unavailable; drain/reconcile before installing a reviewed snapshot'}
+
+
+def plain_report(value):
+    source = value['source']
+    dirty = 'unknown' if source['dirty'] is None else ('yes' if source['dirty'] else 'no')
+    return '\n'.join((
+        f"Graph Community source report (schema {value['schema_version']})",
+        f"Package: {value['package']}; release version: unknown",
+        f"Source: {source['kind']}; Git: {source['git_state']}",
+        f"Revision: {source['revision'] or 'unknown'}; dirty: {dirty}",
+        f"Manifest SHA256: {source['manifest_sha256'] or 'unknown'}",
+        f"Manifest verification: {source['manifest_state']}",
+        'Runtime identity: unknown; service: unknown',
+        value['summary'], value['diagnostic']))
 
 
 def activate():
@@ -110,7 +175,7 @@ def main():
         return 2
     try:
         value = activate() if args[0] == 'apply-update' else snapshot()
-        print(json.dumps(value))
+        print(json.dumps(value) if '--json' in args else plain_report(value))
         return 0
     except (RuntimeError, OSError, ValueError) as error:
         print(str(error), file=sys.stderr)
