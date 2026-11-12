@@ -38,7 +38,7 @@
     },
     "QUICKSTART.md": {
       "mode": "0o644",
-      "sha256": "de1a5981a4920560ca281dfe6583a9143b8745a3b5a7bf214e95da342326445c"
+      "sha256": "4302d13235462e2d7cdef68b23343b73117ac8f3ce67f256269ef3ea1e59eac8"
     },
     "README.md": {
       "mode": "0o644",
@@ -62,7 +62,7 @@
     },
     "bin/graph": {
       "mode": "0o755",
-      "sha256": "bf1bb79eac9833ce5092caffa47c0a73eb2abea4ef51b35399396a726029c795"
+      "sha256": "92693fecbfed4675dc3438a612ebef6f63bd3394305f06178ca8df35355cc7ed"
     },
     "ci/archive.py": {
       "mode": "0o644",
@@ -70,7 +70,7 @@
     },
     "ci/check.py": {
       "mode": "0o644",
-      "sha256": "f4ed6900a69d0761dbd042902d5441a6ee99a3032ed23777e5dbc5a8912a462e"
+      "sha256": "f438595791af9a542df79bf02fc85cf454a2214d1b8f6426e38ab46bf2f98f55"
     },
     "ci/smoke.yml.example": {
       "mode": "0o644",
@@ -103,6 +103,10 @@
     "ci/test_queue.py": {
       "mode": "0o644",
       "sha256": "6245feb62acbe39b6c485d42cfea842b27a8dd056c91f2a4d9b8abcb3764eaa9"
+    },
+    "ci/test_status.py": {
+      "mode": "0o644",
+      "sha256": "1996d904d27491ed22cb4b44e74c835609ef20f8110d58022504d52e3352c4ca"
     },
     "docs/GUIDANCE-REVIEW.md": {
       "mode": "0o644",
@@ -338,7 +342,7 @@
     },
     "watcher.py": {
       "mode": "0o644",
-      "sha256": "2f82c3d8b9b82d2c37d16ed6a6d4b85815b68704f4c7561ec60324ddbf1519b4"
+      "sha256": "a03c6d745f48e82ed47ed6d4f186453128378f5f74974dbacfc0613bd36ba97a"
     }
   },
   "package": "graph-community",

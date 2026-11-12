@@ -90,6 +90,22 @@ are withheld. Invalid or duplicate enrollment is reported without reading GitHub
 `watch --once` can dispatch real work. Accounts-free verification remains
 `ci/check.py` with fake GitHub responses.
 
+For local terminal/script monitors, use `python3 -B watcher.py status --json`
+(or `bin/graph status --json`). Schema version 1 reports diagnostic availability
+and freshness, the last known coordinator exit code, and explicit unknowns. It
+reads only the local run-disposition receipt, without GitHub or runtime probes.
+Scoped observations are fresh for 300 seconds from `last_checked`; stale,
+future-dated or malformed values cannot supply current counts. `scoped_blocked_count`
+counts only fresh blocked diagnostic records, never the repository backlog.
+Queue candidate/blocked totals remain `null` because these receipts are not a
+complete queue snapshot. Last-run receipts lack completion timestamps, so their
+freshness stays unknown; exit code 0 does not prove delivery. Source identity is
+unavailable here (use `graph version --json`), and worker liveness, native hooks
+and remote delivery stay unknown. Missing/invalid receipts produce JSON with
+missing/unavailable diagnostics, without raw errors or private paths. Plain
+`status` and `status --details` keep their existing output; format flags are
+mutually exclusive.
+
 ## One real issue, only after native-host/account authorization
 
 Use an authorized disposable PRIVATE test repository with no production data;

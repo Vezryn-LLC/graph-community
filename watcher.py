@@ -1281,7 +1281,67 @@ def compact_status(state, source):
     status_line('Details: graph status --details · source: graph version --json')
 
 
-def run_status(details=False):
+def status_report():
+    """Versioned, allowlisted projection of local receipts; no runtime probes."""
+    report = {'schema_version': 1,
+              'diagnostics': {'status': 'missing', 'freshness': 'unknown',
+                              'freshness_window_seconds': 300, 'fresh_records': None,
+                              'stale_records': None, 'scoped_blocked_count': None},
+              'last_coordinator': {'status': 'unavailable', 'exit_status': None,
+                                   'freshness': 'unknown', 'product_correctness': 'unknown'},
+              'queue': {'status': 'unavailable', 'candidate_count': None, 'blocked_count': None},
+              'source_identity': {'status': 'unavailable', 'command': 'graph version --json'},
+              'live_workers': 'unknown', 'remote_delivery': 'unknown', 'native_hooks': 'unknown',
+              'limits': 'Local historical diagnostics only; scoped records are not queue totals. '
+                        'File timestamps do not prove observation time, elapsed runtime or liveness.'}
+    try:
+        with platform.private_read(STATE / RUN_STATE, limit=2 * 1024 * 1024) as file:
+            state = json.loads(file.read(2 * 1024 * 1024 + 1))
+        if (not isinstance(state, dict) or type(state.get('version')) is not int
+                or state['version'] != 1 or not isinstance(state.get('issues'), dict)
+                or not {'pending', 'hold'} <= state.keys()):
+            raise ValueError('Invalid receipt')
+        fresh, stale, blocked = 0, 0, 0
+        now = time.time()
+        for key, record in state['issues'].items():
+            if (not isinstance(key, str) or not reference(key) or not isinstance(record, dict)
+                    or not isinstance(record.get('observation'), dict)
+                    or not isinstance(record['observation'].get('disposition'), str)):
+                raise ValueError('Invalid scoped record')
+            stamp = record.get('last_checked')
+            if not isinstance(stamp, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z', stamp):
+                raise ValueError('Invalid observation time')
+            parsed = time.strptime(stamp, '%Y-%m-%dT%H:%M:%SZ')
+            if time.strftime('%Y-%m-%dT%H:%M:%SZ', parsed) != stamp:
+                raise ValueError('Invalid observation time')
+            age = now - calendar.timegm(parsed)
+            if age < 0:
+                raise ValueError('Future observation time')
+            if age > 300:
+                stale += 1
+                continue
+            fresh += 1
+            blocked += record['observation']['disposition'] == 'blocked'
+        report['diagnostics'].update(status='available',
+            freshness=('mixed' if fresh and stale else 'stale' if stale else 'fresh' if fresh else 'unknown'),
+            fresh_records=fresh, stale_records=stale,
+            scoped_blocked_count=blocked if fresh else None)
+        last = state.get('last_run')
+        # Existing last_run receipts have no completion timestamp. Expose only
+        # a valid historical exit code, never session IDs, errors or success claims.
+        if isinstance(last, dict) and type(last.get('exit_status')) is int and -255 <= last['exit_status'] <= 255:
+            report['last_coordinator'].update(status='last_known', exit_status=last['exit_status'])
+    except FileNotFoundError:
+        pass
+    except (OSError, ValueError, RuntimeError, OverflowError):
+        report['diagnostics'].update(status='unavailable', freshness='unknown')
+    return report
+
+
+def run_status(details=False, as_json=False):
+    if as_json:
+        print(json.dumps(status_report(), indent=2, sort_keys=True))
+        return
     state=load_run_state()
     if details:
         print(json.dumps(state, indent=2, sort_keys=True))
@@ -1557,7 +1617,10 @@ def main() -> int:
     sub.add_parser("capabilities", help="Versioned OS capability JSON; no runtime ownership inference")
     sub.add_parser("doctor", help="Read-only accounts-free local preflight; no dispatch").add_argument("--json", action="store_true")
     sub.add_parser("queue", help="Read current GitHub ready-label candidates; no dispatch").add_argument("--json", action="store_true")
-    sub.add_parser("status", help="Read local post-run disposition diagnostics; no network or inference").add_argument("--details", action="store_true")
+    status = sub.add_parser("status", help="Read local post-run disposition diagnostics; no network or inference")
+    status_format = status.add_mutually_exclusive_group()
+    status_format.add_argument("--details", action="store_true")
+    status_format.add_argument("--json", action="store_true")
     sub.add_parser("library", help="Show effective Markdown paths and override precedence").add_argument(
         "--explain", action="store_true", help="Read-only provenance JSON; omit absolute paths and contents")
     repo_cmd = sub.add_parser("repo", help="Manage watched GitHub repositories")
@@ -1578,7 +1641,7 @@ def main() -> int:
         elif args.command == "queue":
             return print_queue(args.json)
         elif args.command == "status":
-            run_status(args.details)
+            run_status(args.details, args.json)
         elif args.command == "library":
             overrides = Path(os.environ.get(
                 "VEZRYN_GRAPH_LIBRARY", str(CONFIG.parent / "library"))).expanduser()
