@@ -38,11 +38,11 @@
     },
     "QUICKSTART.md": {
       "mode": "0o644",
-      "sha256": "2a725e94dca43093c090b6a06bfec031c4154ab1307256b7bd9895044f677c83"
+      "sha256": "bfaaaf79915d07aed96e9e26630b9ad567e631dc416320959e7b3cf6e888b882"
     },
     "README.md": {
       "mode": "0o644",
-      "sha256": "414d2d77d08293dfd8e2a5451c5a98af21015baf9e22be2d635d3b588b1c1f58"
+      "sha256": "89bf710dffacfa56a60dc2d58b99fde628c5c0b13cce550e63d1727f32a8798f"
     },
     "RELEASE-NOTES-v0.1.0.md": {
       "mode": "0o644",
@@ -54,7 +54,7 @@
     },
     "RELEASE-NOTES-v0.1.2.md": {
       "mode": "0o644",
-      "sha256": "3ed5cdc0e63d95f9d9c9d57dc8a8ceb38940446c630768b7cdc14b96fc480c70"
+      "sha256": "2562383a5065cb6c59e233996ec00312a9202347e38052882a91fee67cdfeaf6"
     },
     "SECURITY.md": {
       "mode": "0o644",
