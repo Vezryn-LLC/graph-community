@@ -122,6 +122,11 @@ python3 -B watcher.py watch --once
 
 Enrollment persists locally. `watch --once` can read GitHub and launch a real
 coordinator; it is not a dry-run. For accounts-free testing use `ci/check.py`.
+Concurrent `repo add`/`repo revoke` edits fail with a retry message instead of
+overwriting another edit. Retry the failed command after the other editor finishes;
+only a successful command confirms the change. A private config-side `.lock` file
+is retained for coordination; `repo list` remains read-only. Revocation changes
+discovery and does not terminate a surviving worker.
 Native Mac/Windows runner commands, recovery gates and path defaults are in
 PLATFORMS.md. Record real trusted SessionStart/SubagentStart/SubagentStop delivery,
 actual worker edits/validation/PR, stop/drain and safe restart without a duplicate

@@ -140,8 +140,10 @@ def save(repos: list[str]) -> None:
     tmp = CONFIG.with_name(CONFIG.name + f".{os.getpid()}.tmp")
     platform.file_target(CONFIG)
     platform.file_target(tmp)
+    created = False
     try:
         with tmp.open("x", encoding="utf-8") as file:
+            created = True
             platform.file_permissions(tmp)
             file.write("repositories = [\n")
             for repo in repos:
@@ -149,22 +151,32 @@ def save(repos: list[str]) -> None:
             file.write("]\n")
         os.replace(tmp, CONFIG)
     finally:
-        tmp.unlink(missing_ok=True)
+        if created:
+            tmp.unlink(missing_ok=True)
 
 
 def manage(action: str, repo: str | None) -> None:
-    current = enrolled()
     if action == "list":
+        current = enrolled()
         print("\n".join(current) if current else "(no enrolled repositories)")
         return
     assert repo is not None
     validate_repo(repo)
-    match = {item.lower(): item for item in current}
-    if action == "add" and repo.lower() not in match:
-        current.append(repo)
-    if action == "revoke":
-        current = [item for item in current if item.lower() != repo.lower()]
-    save(current)
+    platform.private_directory(CONFIG.parent)
+    # Keep a stable lock inode beside the config: replacing/deleting the lock
+    # would let another editor acquire different ownership during this write.
+    with platform.open_lock(CONFIG.with_name(CONFIG.name + ".lock")) as lock:
+        try:
+            platform.lock_exclusive(lock)
+        except BlockingIOError as error:
+            raise RuntimeError("Enrollment is being edited; retry the repo command after the other editor finishes") from error
+        current = enrolled()
+        match = {item.lower(): item for item in current}
+        if action == "add" and repo.lower() not in match:
+            current.append(repo)
+        if action == "revoke":
+            current = [item for item in current if item.lower() != repo.lower()]
+        save(current)
     print(f"{action}: {repo} ({len(current)} enrolled)")
 
 
