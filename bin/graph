@@ -11,7 +11,7 @@ STOP="$STATE/stop-request"
 usage() {
   echo 'Usage: graph {install|uninstall|start|stop|status|logs|repo|queue|capabilities|version|check-update|apply-update}'
   echo 'stop: cease new dispatch; let any in-flight coordinator finish'
-  echo 'version/check-update/apply-update: --json; status: --details'
+  echo 'version/check-update/apply-update: --json; status: --details or --json'
 }
 active() { systemctl --user is-active --quiet "$UNIT"; }
 
@@ -294,6 +294,9 @@ except (RuntimeError, OSError, ValueError, subprocess.TimeoutExpired) as error:
 PY
     ;;
   status)
+    if [ "$#" -eq 2 ] && [ "$2" = "--json" ]; then
+      exec /usr/bin/python3 -B "$ROOT/watcher.py" "$@"
+    fi
     [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = "--details" ]; } || { usage >&2; exit 2; }
     if active; then
       if [ -e "$STOP" ]; then
