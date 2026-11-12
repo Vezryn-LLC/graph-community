@@ -21,6 +21,100 @@ spec.loader.exec_module(package_check)
 
 
 class LibraryTests(unittest.TestCase):
+    def test_explain_provenance_and_missing_invalid_locations(self):
+        with tempfile.TemporaryDirectory(prefix='Community provenance ') as folder:
+            base = Path(folder)
+            root, overrides = base / 'bundled files', base / 'local overrides'
+            (root / 'playbooks').mkdir(parents=True)
+            (root / 'playbooks/deliver.md').write_text('# Bundled\n')
+            (root / 'playbooks/keep.md').write_text('# Keep\n')
+            initial = library.instructions(root, overrides)
+            report = library.explain(root, overrides)
+            self.assertEqual(report['override_root'], 'missing')
+            self.assertFalse(overrides.exists())
+            self.assertTrue(all(row['provenance'] == 'bundled' for row in report['entries']))
+            self.assertEqual(library.instructions(root, overrides), initial)
+            (overrides / 'playbooks').mkdir(parents=True)
+            replacement = overrides / 'playbooks/deliver.md'
+            replacement.write_text('# Local\n')
+            (overrides / 'playbooks/local.md').write_text('# New local guidance\n')
+            marker = overrides / 'playbooks/deliver.md.disabled'
+            marker.touch()
+            (overrides / 'playbooks/invalid.md').mkdir()
+            before = library.instructions(root, overrides)
+            report = library.explain(root, overrides)
+            rows = {row['name']: row for row in report['entries']}
+            self.assertEqual(rows['playbooks/deliver.md']['provenance'], 'disabled')
+            self.assertNotIn('playbooks/deliver.md', library.resolve(root, overrides))
+            self.assertEqual(rows['playbooks/keep.md']['provenance'], 'bundled')
+            self.assertEqual(rows['playbooks/local.md']['provenance'], 'overridden')
+            self.assertEqual(rows['playbooks/invalid.md']['provenance'], 'missing')
+            self.assertEqual(rows['playbooks/invalid.md']['diagnostics'], ['invalid_override_file'])
+            self.assertNotIn(str(base), json.dumps(report))
+            self.assertNotIn('# Local', json.dumps(report))
+            self.assertEqual(library.instructions(root, overrides), before)
+            marker.unlink()
+            self.assertEqual(library.explain(root, overrides)['entries'][0]['provenance'], 'overridden')
+            invalid_root = base / 'not a directory'
+            invalid_root.write_text('private content')
+            self.assertEqual(library.explain(root, invalid_root)['override_root'], 'invalid')
+            self.assertEqual(library.resolve(root, invalid_root), library.resolve(root, base / 'missing'))
+            with patch.object(library, 'resolve', side_effect=PermissionError(str(base))):
+                failed = library.explain(root, overrides)
+            self.assertEqual(failed['diagnostic'], 'library_inspection_unavailable')
+            self.assertNotIn(str(base), json.dumps(failed))
+
+    @unittest.skipIf(os.name == 'nt', 'Symlink creation may require Windows privileges')
+    def test_explain_symlinks_preserve_existing_resolution(self):
+        with tempfile.TemporaryDirectory(prefix='Community symlink provenance ') as folder:
+            base = Path(folder)
+            root, overrides = base / 'bundled', base / 'overrides with spaces'
+            for directory in (root / 'playbooks', overrides / 'playbooks'):
+                directory.mkdir(parents=True)
+            (root / 'playbooks/check.md').write_text('# Default\n')
+            target = base / 'local target.md'
+            target.write_text('# Local\n')
+            link = overrides / 'playbooks/check.md'
+            link.symlink_to(target)
+            report = library.explain(root, overrides)['entries'][0]
+            self.assertEqual(report['provenance'], 'overridden')
+            self.assertTrue(report['override_symlink'])
+            self.assertEqual(library.resolve(root, overrides)['playbooks/check.md'], target)
+            target.unlink()
+            report = library.explain(root, overrides)['entries'][0]
+            self.assertEqual(report['provenance'], 'bundled')
+            self.assertEqual(report['diagnostics'], ['invalid_override_file'])
+            marker = overrides / 'playbooks/check.md.disabled'
+            marker.symlink_to(base / 'absent marker target')
+            report = library.explain(root, overrides)['entries'][0]
+            self.assertEqual(report['provenance'], 'bundled')
+            self.assertIn('broken_disable_marker', report['diagnostics'])
+            target.write_text('# Local\n')
+            marker.unlink()
+            marker.symlink_to(target)
+            self.assertEqual(library.explain(root, overrides)['entries'][0]['provenance'], 'disabled')
+            self.assertEqual(library.resolve(root, overrides), {})
+
+    def test_explain_cli_is_opt_in_and_read_only(self):
+        with tempfile.TemporaryDirectory(prefix='Community explanation CLI ') as folder:
+            base = Path(folder)
+            overrides = base / 'overrides'
+            env = dict(os.environ, HOME=str(base), USERPROFILE=str(base),
+                       VEZRYN_GRAPH_CONFIG=str(base / 'config/repos.toml'),
+                       VEZRYN_GRAPH_STATE=str(base / 'state'), VEZRYN_GRAPH_LIBRARY=str(overrides))
+            def run(*args):
+                return subprocess.run([sys.executable, '-B', str(ROOT / 'watcher.py'), 'library', *args],
+                                      env=env, capture_output=True, text=True, check=True)
+            normal = run().stdout
+            self.assertEqual(normal, library.instructions(ROOT, overrides) + '\n')
+            report = json.loads(run('--explain').stdout)
+            self.assertEqual(report['version'], 1)
+            self.assertEqual(report['override_root'], 'missing')
+            self.assertEqual(len(report['entries']), 38)
+            self.assertNotIn(str(ROOT), json.dumps(report))
+            self.assertEqual(list(base.iterdir()), [])
+            self.assertEqual(run().stdout, normal)
+
     def test_fresh_defaults_overrides_disable_and_replacement(self):
         with tempfile.TemporaryDirectory(prefix='Community library ') as folder:
             base = Path(folder)

@@ -63,6 +63,31 @@ the default. Recommendations cannot resurrect disabled files. If missing
 essential guidance prevents safe work, Codex explains and defers that assignment.
 A library marker cannot erase standing instructions already supplied by Codex.
 
+To see why an entry is present or absent, use the opt-in local explanation:
+
+```sh
+python3 -B watcher.py library --explain
+```
+
+This read-only JSON reports `bundled`, `overridden` (including local-only names),
+`disabled`, or `missing` for each discovered logical entry. It reports a missing
+override directory separately from a `.disabled` marker; a fresh installation
+normally has no override directory. Invalid override locations/files and broken
+marker symlinks receive diagnostics. Absolute paths and Markdown contents are
+omitted. For example, a replacement plus its marker is reported as `disabled`;
+removing the marker changes it to `overridden`, and removing the replacement
+restores `bundled`.
+
+The explanation preserves the existing resolver: a file symlink can supply a
+replacement, a broken replacement falls back to the bundled file if present,
+and a marker only disables when its target exists. `override_symlink` identifies
+a local symlink without exposing its target. `missing` means a discovered entry
+has no effective regular file (for example, a directory named like a Markdown
+file), not that an unknown name was disabled. An inspection error is reported as
+`library_inspection_unavailable`, without exception text or partial conclusions.
+This view does not validate Markdown content, grant permissions or change routing.
+The ordinary `library` command and coordinator inventory remain unchanged.
+
 Changes are read on the next coordinator launch. Drain existing work before
 changing guidance that must take effect consistently; service environment overrides
 must be set in that service, not just an unrelated shell. Graph does not write
