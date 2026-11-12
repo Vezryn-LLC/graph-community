@@ -923,17 +923,59 @@ def save_observations(observations: dict) -> None:
 
 RUN_FIELDS = '''number state stateReason body
  labels(first:100){totalCount pageInfo{hasNextPage endCursor} nodes{name}}
- comments(last:20){totalCount pageInfo{hasNextPage endCursor} nodes{body url createdAt}}
+ comments(last:20){totalCount pageInfo{hasNextPage hasPreviousPage endCursor} nodes{body url createdAt}}
  blockedBy(first:100){totalCount pageInfo{hasNextPage endCursor} nodes{url}}
  closedByPullRequestsReferences(first:20){totalCount pageInfo{hasNextPage endCursor} nodes{url}}
  timelineItems(last:30,itemTypes:[LABELED_EVENT,UNLABELED_EVENT]){nodes{
  __typename ... on LabeledEvent{id createdAt label{name}} ... on UnlabeledEvent{id createdAt label{name}}
- } pageInfo{hasPreviousPage} totalCount}'''
+ } pageInfo{hasNextPage hasPreviousPage} totalCount}'''
 RUN_STATE = 'run-disposition.json'
 
 
 def issue_key(issue):
     return f"{issue['repo'].lower()}#{issue['number']}"
+
+
+def retirement_ready_chronology(raw):
+    """Corroborate a missing baseline; bounded/incomplete history cannot clear it."""
+    comments, all_comments = connection(raw.get('comments'))
+    events, all_events = connection(raw.get('timelineItems'))
+    if not all_comments or raw['comments']['pageInfo'].get('hasPreviousPage') is not False:
+        return 'incomplete_comments'
+    if not all_events or raw['timelineItems']['pageInfo'].get('hasPreviousPage') is not False:
+        return 'incomplete_label_history'
+    from datetime import datetime, timezone
+
+    def timestamp(row):
+        value = row.get('createdAt')
+        if not isinstance(value, str):
+            raise ValueError('Missing timestamp')
+        stamp = datetime.fromisoformat(value.replace('Z', '+00:00'))
+        if stamp.tzinfo is None:
+            raise ValueError('Missing timezone')
+        return stamp.astimezone(timezone.utc)
+
+    try:
+        if any(not isinstance(c, dict) or not all(isinstance(c.get(k), str) for k in ('body', 'url', 'createdAt')) for c in comments):
+            return 'malformed_comments'
+        if any(not isinstance(e, dict) or e.get('__typename') not in {'LabeledEvent', 'UnlabeledEvent'}
+               or not isinstance(e.get('id'), str) or not e['id']
+               or not isinstance(e.get('label'), dict) or not isinstance(e['label'].get('name'), str) for e in events):
+            return 'malformed_label_history'
+        comment_times = [timestamp(c) for c in comments]
+        event_times = [timestamp(e) for e in events]
+        if comment_times != sorted(comment_times) or event_times != sorted(event_times):
+            return 'unordered_chronology'
+    except (ValueError, TypeError, OverflowError):
+        return 'malformed_chronology'
+    handoffs = [(c, at) for c, at in zip(comments, comment_times)
+                if c['body'].startswith(('Graph retirement pending', 'Graph retirement complete'))]
+    ready = [(e, at) for e, at in zip(events, event_times) if e['label']['name'] == 'status:ready']
+    if not handoffs or not handoffs[-1][0]['body'].startswith('Graph retirement pending'):
+        return 'missing_pending_handoff'
+    if not ready or ready[-1][0]['__typename'] != 'LabeledEvent':
+        return 'missing_ready_event'
+    return 'verified' if ready[-1][1] > handoffs[-1][1] else 'ready_not_after_handoff'
 
 
 def source_disposition(raw):
@@ -945,8 +987,8 @@ def source_disposition(raw):
     if not all_labels or any(not isinstance(v, dict) or not isinstance(v.get('name'), str) for v in labels):
         return unknown
     names = sorted(v['name'] for v in labels)
-    events = (raw.get('timelineItems') or {}).get('nodes', [])
-    ready = [e for e in events if isinstance(e, dict) and e.get('__typename') == 'LabeledEvent' and (e.get('label') or {}).get('name') == 'status:ready' and isinstance(e.get('id'), str)]
+    events, _ = connection(raw.get('timelineItems'))
+    ready = [e for e in events if isinstance(e, dict) and e.get('__typename') == 'LabeledEvent' and isinstance(e.get('label'), dict) and e['label'].get('name') == 'status:ready' and isinstance(e.get('id'), str)]
     epoch = ready[-1]['id'] if ready else None
     comments, all_comments = connection(raw.get('comments'))
     all_comments = all_comments and all(isinstance(c,dict) and all(isinstance(c.get(k),str)for k in ('body','url','createdAt'))for c in comments)
@@ -963,6 +1005,7 @@ def source_disposition(raw):
     value['handoff_links'] = ref_names(intended or set()) if declaration['mode'] not in {'invalid','unknown'} and native['read_status']=='complete' and not (native_refs-set(intended or [])) else []
     lifecycle = set(names) & {'status:ready','status:in-progress','status:awaiting-merge','status:blocked'}
     marker = next((c['body'].splitlines()[0] for c in reversed(comments) if isinstance(c,dict) and isinstance(c.get('body'),str) and c['body'].startswith(('Graph retirement pending','Graph retirement complete'))), None)
+    value['ready_recovery_chronology'] = retirement_ready_chronology(raw)
     value['retirement'] = 'complete' if marker and marker.startswith('Graph retirement complete') else 'pending' if marker else 'unknown'
     if raw['state'] == 'CLOSED' and 'stateReason' in raw and raw.get('stateReason') in {None,'COMPLETED','NOT_PLANNED','REOPENED','DUPLICATE'}:
         value['disposition'] = 'closed'
@@ -981,7 +1024,7 @@ def source_disposition(raw):
         valid_edges = declaration['mode'] not in {'invalid','unknown'} and native['read_status'] in {'complete','unsupported'} and bool(related)
         value['disposition'] = 'blocked' if concrete or valid_edges else 'unknown_blocked'
     elif lifecycle == {'status:ready'}:
-        recent_claim = claim and (not ready or not isinstance(claim.get('createdAt'),str) or claim['createdAt'] >= ready[-1].get('createdAt',''))
+        recent_claim = claim and (not ready or not isinstance(ready[-1].get('createdAt'),str) or claim['createdAt'] >= ready[-1]['createdAt'])
         value['disposition'] = 'uncertain_claim' if recent_claim else 'ready'
         if not all_comments and not claim:
             value['disposition'] = 'unknown_ready_ownership'
@@ -1275,8 +1318,11 @@ def refresh_run_state(state, repos):
             parent=observed.get(old.get('parent_scope'),{})
             if disposition=='ready' and parent.get('disposition')=='blocked' and key in parent.get('handoff_links',[]):
                 state['issues'].pop(key,None);recovery=True
-            elif (disposition=='ready' and value.get('ready_epoch') and old.get('ready_epoch')
-                  and value['ready_epoch']!=old['ready_epoch'] and not state.get('hold')
+            elif (disposition=='ready' and value.get('ready_epoch')
+                  and ((old.get('ready_epoch') is not None and value['ready_epoch']!=old['ready_epoch'])
+                       or (old.get('ready_epoch') is None and old_kind=='retirement_handoff_unresolved'
+                           and value.get('ready_recovery_chronology')=='verified'))
+                  and not state.get('hold')
                   and not (old.get('parent_scope') and old['parent_scope'] in state['issues'])):
                 # A fresh ready transition requests native reconciliation of the
                 # existing claim/source, even while retirement remains pending.
@@ -1285,6 +1331,12 @@ def refresh_run_state(state, repos):
             elif old_kind=='retirement_handoff_unresolved' and value.get('retirement')!='complete':
                 value['disposition']='retirement_handoff_unresolved'
                 old['observation']=clean_source(value)
+                if old.get('ready_epoch') is None:
+                    old['next_action'] = ('Graph: reconcile the existing claim/source and native ownership; '
+                        'missing ready baseline requires complete comments and label history proving a ready event '
+                        'strictly after the latest pending retirement handoff. Chronology: '
+                        + value.get('ready_recovery_chronology', 'unavailable')
+                        + '. Preserve source and unresolved effects; a wake does not prove worker exit or source retirement.')
             elif old.get('parent_scope') and old['parent_scope'] in state['issues']:
                 old['observation']=clean_source(value)
             elif disposition in {'claimed','awaiting_merge','blocked','closed','removed_from_eligible_scope'}:
