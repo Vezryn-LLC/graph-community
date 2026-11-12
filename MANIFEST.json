@@ -42,7 +42,7 @@
     },
     "README.md": {
       "mode": "0o644",
-      "sha256": "0c5c51869b87766952da1d2f9de25cea0b2c8fa1c46ae33d5b2d5e5ee5752274"
+      "sha256": "e179b725361619b11de84bd1ae6cdbb42f5b4f8525d3d1c0c531004b76a0c90c"
     },
     "RELEASE-NOTES-v0.1.0.md": {
       "mode": "0o644",
@@ -98,7 +98,7 @@
     },
     "docs/wiki/Home.md": {
       "mode": "0o644",
-      "sha256": "df60748e0b28eb8d9d35535947e769c1434fe1e26a9f062ad6f96c3d234c9b30"
+      "sha256": "eae532275e73912579f19b7eb1713a4dd052cce3ab2205688c44d22037e935a2"
     },
     "docs/wiki/Playbooks-and-Skills.md": {
       "mode": "0o644",

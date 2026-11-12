@@ -1,3 +1,5 @@
+Welcome to the graph-community wiki!
+
 # Start here
 
 Graph Community helps turn a bounded GitHub issue into ordinary engineering work with native Codex. You choose the repositories, supply your own authenticated tools and retain authority over their actions. The coordinator reads an eligible issue, delegates implementation to an isolated worker, and records validation and PR disposition in GitHub.
