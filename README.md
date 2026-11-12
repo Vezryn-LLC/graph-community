@@ -10,13 +10,14 @@ Codex coordinate implementation and verification through your existing PR workfl
 **[Try the Quickstart](QUICKSTART.md)** ·
 [Latest public release](https://github.com/Vezryn-LLC/graph-community/releases/latest) ·
 [Architecture](ARCHITECTURE.md) · [Platform limits](PLATFORMS.md) ·
-[Contribute](CONTRIBUTING.md) · [Wiki tutorial sources](docs/wiki/Home.md)
+[Contribute](CONTRIBUTING.md) · [Wiki](https://github.com/Vezryn-LLC/graph-community/wiki)
 
-The six Wiki tutorials and navigation are ready for publication. The separate
-[GitHub Wiki](https://github.com/Vezryn-LLC/graph-community/wiki) still needs its
-first Home page saved by a repository writer; these source files are not proof of
-a live Wiki. [Issue #11](https://github.com/Vezryn-LLC/graph-community/issues/11)
-tracks that one-time initialization and remote-page verification.
+The [Wiki](https://github.com/Vezryn-LLC/graph-community/wiki) teaches a first
+workflow, enrollment/readiness, library customization and recovery. Canonical
+installation, platform and security references remain in this repository;
+[reviewed tutorial sources](docs/wiki/Home.md) and the
+[upkeep convention](CONTRIBUTING.md#documentation-upkeep) keep corrections in the
+ordinary contribution and release workflow.
 
 ## How work moves
 
