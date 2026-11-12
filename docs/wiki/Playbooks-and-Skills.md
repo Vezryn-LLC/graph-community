@@ -6,6 +6,8 @@ The engineering library is editable Markdown for native Codex. A playbook gives 
 
 The [library guide](https://github.com/Vezryn-LLC/graph-community/blob/main/docs/LIBRARY.md) is the canonical reference for the inventory, configuration roots, supported paths and precedence. Use its documented `library` command under the intended profile before changing guidance.
 
+Use `python3 -B watcher.py library --explain` when you need to distinguish bundled guidance, a local replacement, a disable marker or a missing/invalid override. This opt-in read-only JSON omits absolute paths and file contents; the ordinary `library` output remains the coordinator's path inventory. Follow the canonical guide for symlink and diagnostic details.
+
 Start from the original issue rather than selecting instructions by label alone. Typical examples are:
 
 - A misleading setup paragraph: [document-and-verify](https://github.com/Vezryn-LLC/graph-community/blob/main/playbooks/document-and-verify.md), supported by [outcome-driven-engineering](https://github.com/Vezryn-LLC/graph-community/blob/main/skills/outcome-driven-engineering/SKILL.md).

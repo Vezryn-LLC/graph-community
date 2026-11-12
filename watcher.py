@@ -19,7 +19,7 @@ import tomllib
 
 import graph_platform as platform
 
-from library import instructions as library_instructions, resolve as library_resolve
+from library import explain as library_explain, instructions as library_instructions, resolve as library_resolve
 
 ROOT = Path(__file__).resolve().parent
 CONFIG, STATE = platform.paths()
@@ -1467,7 +1467,8 @@ def main() -> int:
     sub.add_parser("capabilities", help="Versioned OS capability JSON; no runtime ownership inference")
     sub.add_parser("doctor", help="Read-only accounts-free local preflight; no dispatch").add_argument("--json", action="store_true")
     sub.add_parser("status", help="Read local post-run disposition diagnostics; no network or inference").add_argument("--details", action="store_true")
-    sub.add_parser("library", help="Show effective Markdown paths and override precedence")
+    sub.add_parser("library", help="Show effective Markdown paths and override precedence").add_argument(
+        "--explain", action="store_true", help="Read-only provenance JSON; omit absolute paths and contents")
     repo_cmd = sub.add_parser("repo", help="Manage watched GitHub repositories")
     repo_sub = repo_cmd.add_subparsers(dest="action", required=True)
     for name in ("add", "revoke", "list"):
@@ -1486,8 +1487,12 @@ def main() -> int:
         elif args.command == "status":
             run_status(args.details)
         elif args.command == "library":
-            print(library_instructions(ROOT, Path(os.environ.get(
-                "VEZRYN_GRAPH_LIBRARY", str(CONFIG.parent / "library"))).expanduser()))
+            overrides = Path(os.environ.get(
+                "VEZRYN_GRAPH_LIBRARY", str(CONFIG.parent / "library"))).expanduser()
+            if args.explain:
+                print(json.dumps(library_explain(ROOT, overrides), indent=2))
+            else:
+                print(library_instructions(ROOT, overrides))
         elif args.command == "repo":
             manage(args.action, getattr(args, "repository", None))
         else:

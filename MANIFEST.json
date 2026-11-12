@@ -78,7 +78,7 @@
     },
     "ci/test_library.py": {
       "mode": "0o644",
-      "sha256": "3d81a1d791805b0718b77e738c5593c6f8ef9e9ad72f334620156d66eaabd27f"
+      "sha256": "ad774ec4bf40fda5c7912dacdd896365a9d7bd8bc509cdc69cda829cb3db6afc"
     },
     "docs/GUIDANCE-REVIEW.md": {
       "mode": "0o644",
@@ -86,7 +86,7 @@
     },
     "docs/LIBRARY.md": {
       "mode": "0o644",
-      "sha256": "3653a23305d83598fa76abb648a5b295a15e91e80379724bebf9f0f736e7ce6a"
+      "sha256": "9ea07f11c25a9b2ded6c793a34f28884c18d0771d6da86bc91d130525cbe12f9"
     },
     "docs/wiki/Community-and-Upkeep.md": {
       "mode": "0o644",
@@ -106,7 +106,7 @@
     },
     "docs/wiki/Playbooks-and-Skills.md": {
       "mode": "0o644",
-      "sha256": "06b63cc6075fd74618576818e4416819926206bdc09fcdd8134bd04db55cd53c"
+      "sha256": "2499e89113dee336d6366405c7a2025e6f2c00b913dba97b6747b93f9ec78316"
     },
     "docs/wiki/Troubleshooting-and-Recovery.md": {
       "mode": "0o644",
@@ -138,7 +138,7 @@
     },
     "library.py": {
       "mode": "0o644",
-      "sha256": "1d44e227297435be4823ad551310200552c220826a0f8b29c98c59b050a4363c"
+      "sha256": "7dabd0df41d7cd19de64c9740ddde459c6e09da2e76877a821cf8122b7866ca0"
     },
     "playbooks/architecture-decision.md": {
       "mode": "0o644",
@@ -298,7 +298,7 @@
     },
     "watcher.py": {
       "mode": "0o644",
-      "sha256": "d5b02c9a83805789242415a31943c813c14fb6e6e6843621e385c8d5760dc060"
+      "sha256": "50c5242ec973eb8e77b035d5dc5281fe7a13754b10a3944ad90aab429578c252"
     }
   },
   "package": "graph-community",

@@ -19,6 +19,47 @@ def resolve(root: Path, overrides: Path) -> dict[str, Path]:
     }
 
 
+def explain(root: Path, overrides: Path) -> dict:
+    """Explain existing resolution without reading Markdown or disclosing paths."""
+    def location(path):
+        if path.is_dir():
+            return "available"
+        return "invalid" if path.exists() or path.is_symlink() else "missing"
+
+    try:
+        roots = {"bundled_root": location(root), "override_root": location(overrides)}
+        effective = resolve(root, overrides)
+        names = set(effective)
+        for base in (root, overrides):
+            for pattern in PATTERNS:
+                names.update(path.relative_to(base).as_posix() for path in base.glob(pattern))
+        for pattern in PATTERNS:
+            names.update(path.relative_to(overrides).as_posix().removesuffix(".disabled")
+                         for path in overrides.glob(pattern + ".disabled"))
+        entries = []
+        for name in sorted(names):
+            local = overrides / name
+            marker = overrides / (name + ".disabled")
+            diagnostics = []
+            if (local.exists() or local.is_symlink()) and not local.is_file():
+                diagnostics.append("invalid_override_file")
+            if marker.is_symlink() and not marker.exists():
+                diagnostics.append("broken_disable_marker")
+            if marker.exists():
+                provenance = "disabled"
+            elif name not in effective:
+                provenance = "missing"
+            else:
+                provenance = "overridden" if local.is_file() else "bundled"
+            entries.append({"name": name, "provenance": provenance,
+                            "override_symlink": local.is_symlink(), "diagnostics": diagnostics})
+        return {"version": 1, **roots, "entries": entries}
+    except (OSError, RuntimeError, ValueError):
+        # Exception text may contain private absolute paths; keep it local.
+        return {"version": 1, "diagnostic": "library_inspection_unavailable",
+                "entries": []}
+
+
 def instructions(root: Path, overrides: Path) -> str:
     entries = resolve(root, overrides)
     lines = [
