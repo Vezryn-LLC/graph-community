@@ -58,7 +58,7 @@
     },
     "SECURITY.md": {
       "mode": "0o644",
-      "sha256": "9aeb725bfc8ff68ed750e50a8eb4c9d9650f59f9ccbff3bc2d96037682fc4b64"
+      "sha256": "318e05cd8faf8154f165e25b8413c4c31f149510909aa5cbdf71898c839e212e"
     },
     "SMOKE-MATRIX.md": {
       "mode": "0o644",
