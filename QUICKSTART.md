@@ -27,13 +27,40 @@ native payloads are rejected; Graph does not fall back to an unqualified wrapper
 
 ## Acquire source and make a fresh runtime copy
 
-Choose one path below. As observed on 2026-11-12, the published release is
-**v0.1.1**. It has `ci/check.py`, `capabilities` and `smoke.py`, but **no doctor,
-queue or first-issue fixture**. The pinned current-source route includes those
-newer features; they are **unreleased**, not additions to v0.1.1.
-For the complete v0.1.2 preparation snapshot, use the
-[candidate reproduction instructions](RELEASE-NOTES-v0.1.2.md#reproduce-this-source-candidate)
-and exact source SHA recorded in its PR; there are no v0.1.2 release downloads.
+Choose a path below. The [public release page](https://github.com/Vezryn-LLC/graph-community/releases/latest)
+is authoritative for published versions and assets. The historical v0.1.1 path
+has `ci/check.py`, `capabilities` and `smoke.py`, but no doctor, queue or first-issue
+fixture. Those newer features belong to the pinned source and v0.1.2 payload,
+not to v0.1.1. Until v0.1.2 assets appear on its actual release page, use the
+[pinned source](#pinned-current-source) or
+[candidate reproduction instructions](RELEASE-NOTES-v0.1.2.md#reproduce-this-source-candidate).
+
+### v0.1.2 assets, when published
+
+Use only the actual release's `graph-community-v0.1.2.tar`, `MANIFEST.json` and
+`SHA256SUMS`. Do not treat this guide as proof that assets have been uploaded.
+Save all three in a new empty directory. **Before extraction**, compare the
+SHA-256 digest of `SHA256SUMS` with the independently obtained digest in the
+actual release notes. Do not proceed if it is absent or different. Checksums
+are not publisher signatures. Then verify both assets and extract there:
+
+```sh
+python3 -c "from pathlib import Path; import hashlib,sys; names=('graph-community-v0.1.2.tar','MANIFEST.json'); sums=dict(line.split()[::-1] for line in Path('SHA256SUMS').read_text().splitlines()); set(sums)==set(names) or sys.exit('Unexpected checksum entries'); all(hashlib.sha256(Path(n).read_bytes()).hexdigest()==sums[n] for n in names) or sys.exit('Release checksum mismatch'); print('Release checksums match')"
+python3 -c "import shutil; shutil.unpack_archive('graph-community-v0.1.2.tar','source')"
+python3 -c "from pathlib import Path; import sys; Path('source/MANIFEST.json').read_bytes()==Path('MANIFEST.json').read_bytes() or sys.exit('Embedded manifest mismatch'); print('Embedded manifest matches')"
+python3 -c "import shutil; shutil.copytree('source','runtime')"
+cd runtime
+python3 -B ci/check.py
+python3 -B watcher.py doctor --json
+```
+
+Unlike v0.1.1, this uncompressed tar has files directly at its root. On Windows
+PowerShell, use your native Python executable in place of `python3`; these commands
+do not establish a new native Windows witness. On Linux use `/usr/bin/python3`
+for the checker if it differs from `python3`, matching the Linux entrypoint.
+Stop after any failed command; use a fresh empty destination, never overlay an installation.
+Continue with the first-issue walkthrough only for this newer payload, subject
+to the same platform/account limits below.
 
 These commands need Python 3.11+, internet access and (for source) Git, but no
 GitHub sign-in, Codex account or running Graph process. Run them in a **new empty
@@ -87,10 +114,10 @@ and its [tagged platform limits](https://github.com/Vezryn-LLC/graph-community/b
 You have already completed that guide's local check. Stop here for an accounts-free
 release trial; do not run the newer commands or exercise below against v0.1.1.
 
-### Pinned current source (unreleased)
+### Pinned current source
 
-The observed public `main` revision is
-[`594629f7e8860e1fdc40e934b31ac7dd82d873ac`](https://github.com/Vezryn-LLC/graph-community/tree/594629f7e8860e1fdc40e934b31ac7dd82d873ac).
+The reviewed public source snapshot (before release-note reconciliation) is
+[`c6547ec846e268fb756e274155b752b597f8ba57`](https://github.com/Vezryn-LLC/graph-community/tree/c6547ec846e268fb756e274155b752b597f8ba57).
 Use that exact commit for this trial, rather than assuming today's moving `main`
 is identical. This route consumes Git's ordinary tracked-file archive; it does
 not modify or replace any published release or producer archive.
@@ -101,7 +128,7 @@ Linux/macOS, from your chosen parent directory:
 mkdir graph-local-source
 cd graph-local-source
 git clone https://github.com/Vezryn-LLC/graph-community.git source
-git -C source checkout --detach 594629f7e8860e1fdc40e934b31ac7dd82d873ac
+git -C source checkout --detach c6547ec846e268fb756e274155b752b597f8ba57
 git -C source rev-parse HEAD
 git -C source archive --format=tar --output=../payload.tar HEAD
 python3 -c "import shutil; shutil.unpack_archive('payload.tar','runtime')"
@@ -115,7 +142,7 @@ New-Item -ItemType Directory graph-local-source -ErrorAction Stop
 Set-Location graph-local-source
 $Python = (Get-Command python.exe).Source
 git clone https://github.com/Vezryn-LLC/graph-community.git source
-git -C source checkout --detach 594629f7e8860e1fdc40e934b31ac7dd82d873ac
+git -C source checkout --detach c6547ec846e268fb756e274155b752b597f8ba57
 git -C source rev-parse HEAD
 git -C source archive --format=tar --output=../payload.tar HEAD
 & $Python -c "import shutil; shutil.unpack_archive('payload.tar','runtime')"
@@ -143,7 +170,7 @@ capabilities; this pinned trial does not claim to follow future `main` changes.
 
 ## Local check, without accounts or services
 
-For the pinned unreleased source above, you are now in `graph-local-source/runtime`.
+For the pinned source above, you are now in `graph-local-source/runtime`.
 On Linux or Mac:
 
 ```sh
@@ -224,7 +251,7 @@ are withheld. Invalid or duplicate enrollment is reported without reading GitHub
 
 On current main, `python3 -B watcher.py queue --explain` (add `--json` for structured
 output) optionally reads bounded issue bodies/comments, native dependencies and
-closing PRs. This feature is unreleased and absent from v0.1.1. Each candidate has
+closing PRs. This feature is in the v0.1.2 payload and absent from v0.1.1. Each candidate has
 an observed time, `candidate`, `blocked` or `unknown`, finite reason codes and
 only enrolled-repository issue/PR links. Conflicting lifecycle labels and verified
 open dependencies/closing PRs are observed blockers. A historical claim, closed
