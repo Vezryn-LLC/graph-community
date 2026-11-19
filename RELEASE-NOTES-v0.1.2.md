@@ -1,9 +1,10 @@
-# Graph Community v0.1.2 candidate
+# Graph Community v0.1.2
 
-Unreleased source candidate, prepared after published **v0.1.1**. This document
-is the changelog for the candidate; it does not announce a release. No v0.1.2
-tag or download URL exists as part of this preparation. v0.1.0 and v0.1.1 tags,
-notes and assets remain immutable.
+Release-source notes following **v0.1.1**. Check the
+[public releases](https://github.com/Vezryn-LLC/graph-community/releases/latest)
+for publication status, the exact tagged source and available assets. This source
+file or a merged preparation PR alone does not announce publication. Earlier
+v0.1.0 and v0.1.1 tags, notes and assets remain immutable.
 
 ## Additions since v0.1.1
 
@@ -37,6 +38,21 @@ notes and assets remain immutable.
   [PR #13](https://github.com/Vezryn-LLC/graph-community/pull/13),
   [PR #37](https://github.com/Vezryn-LLC/graph-community/pull/37)).
 
+## Reconciled after the original candidate
+
+The original preparation [PR #41](https://github.com/Vezryn-LLC/graph-community/pull/41)
+was not a release. This source also includes these subsequently accepted changes;
+its archives must be rebuilt rather than reusing #41's historical hashes:
+
+- Optional `queue --explain` gives bounded, read-only observations of blockers and
+  uncertainty, with timestamps and enrolled-repository links. It reads at most 20
+  candidates and 20 related issue/PR objects, does not change ordinary `queue`,
+  and never proves eligibility, ownership or permission. Incomplete evidence stays
+  unknown ([PR #42](https://github.com/Vezryn-LLC/graph-community/pull/42)).
+- [Security reporting](SECURITY.md) clarifies the private reporting route and
+  operator responsibilities; Graph is not an authorization boundary or security
+  sandbox ([PR #44](https://github.com/Vezryn-LLC/graph-community/pull/44)).
+
 ## Behavior changes and recovery
 
 - Enrollment edits serialize before reading configuration. Competing add/revoke
@@ -66,19 +82,23 @@ GitHub authentication, delegated-worker capability and trusted hooks remain
 operator prerequisites for actual work. Environment variables retain the
 `VEZRYN_GRAPH_*` prefix. See [Quickstart](QUICKSTART.md) and [platform limits](PLATFORMS.md).
 
-The Quickstart's **published v0.1.1** filenames, checksum and tagged instructions
-continue to describe v0.1.1 only. Its separately pinned current-source example is
-an earlier reproducible unreleased snapshot. Use the candidate procedure below
-for this PR's complete candidate, rather than substituting a nonexistent
-`releases/download/v0.1.2/` URL. A release-note filename is not a machine-readable
-version declaration: `version` still reports release version as unknown.
+The Quickstart retains immutable v0.1.1 instructions and a separately pinned
+source trial. For v0.1.2, the intended release assets are
+`graph-community-v0.1.2.tar`, `MANIFEST.json` and `SHA256SUMS`; use them only when
+listed on the actual v0.1.2 release. The tar has files directly at its root, not
+the historical v0.1.1 `.tar.gz` wrapper. Before publication, the procedure below
+produces local candidate files only. A release-note filename is not a
+machine-readable version declaration: `version` still reports release version
+as unknown.
 
 ## Reproduce this source candidate
 
-Use the exact accepted candidate commit recorded in the preparation PR's evidence.
+Use the exact accepted source commit recorded in the release or preparation PR's evidence.
 In a fresh clone, inspect that commit and its diff from the accepted baseline,
 then detach it. Keep the output directory outside the pristine source checkout.
-These Linux/macOS shell commands create local files only:
+These Linux/macOS shell commands create local files only. On Linux, use the same
+Python 3.11+ interpreter as `bin/graph` (`/usr/bin/python3`) for the entrypoint
+comparison checks; if `python3` resolves elsewhere, replace it below:
 
 ```sh
 git clone https://github.com/Vezryn-LLC/graph-community.git source
@@ -87,11 +107,12 @@ git checkout --detach <candidate-commit>
 git rev-parse HEAD
 python3 -B ci/check.py
 mkdir ../candidate
-python3 -B ci/archive.py ../candidate/graph-community-v0.1.2-candidate.tar > ../candidate/archive-check.log
+python3 -B ci/archive.py ../candidate/graph-community-v0.1.2.tar > ../candidate/archive-check.log
 python3 -B ci/archive.py ../candidate/rebuild.tar > ../candidate/rebuild-check.log
-cmp ../candidate/graph-community-v0.1.2-candidate.tar ../candidate/rebuild.tar
-python3 -c "from pathlib import Path; import hashlib; p=Path('../candidate/graph-community-v0.1.2-candidate.tar'); print(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+p.name)" > ../candidate/SHA256SUMS
-python3 -c "import shutil; shutil.unpack_archive('../candidate/graph-community-v0.1.2-candidate.tar','../candidate/runtime')"
+cmp ../candidate/graph-community-v0.1.2.tar ../candidate/rebuild.tar
+python3 -c "from pathlib import Path; import shutil; shutil.copyfile('MANIFEST.json','../candidate/MANIFEST.json')"
+python3 -c "from pathlib import Path; import hashlib; d=Path('../candidate'); print(''.join(hashlib.sha256((d/n).read_bytes()).hexdigest()+'  '+n+'\n' for n in ('graph-community-v0.1.2.tar','MANIFEST.json')),end='')" > ../candidate/SHA256SUMS
+python3 -c "import shutil; shutil.unpack_archive('../candidate/graph-community-v0.1.2.tar','../candidate/runtime')"
 cd ../candidate/runtime
 python3 -B ci/check.py
 python3 -B watcher.py doctor --json

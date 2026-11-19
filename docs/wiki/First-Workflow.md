@@ -10,7 +10,7 @@ Before a real trial, follow the Quickstart's prerequisites, lifecycle-label setu
 
 ## 2. Write one bounded issue
 
-The unreleased current-source path includes the [local first-issue exercise](https://github.com/Vezryn-LLC/graph-community/tree/main/examples/first-issue) before account setup. It includes a tiny greeting CLI, an exact issue template and focused tests: the default greeting passes, while the requested `--uppercase` test deliberately starts red. Its one-page walkthrough owns the expected fixture outputs and optional disposable-repository journey; these are not an authenticated Graph transcript.
+The pinned current-source and v0.1.2 payload paths include the [local first-issue exercise](https://github.com/Vezryn-LLC/graph-community/tree/main/examples/first-issue) before account setup. It includes a tiny greeting CLI, an exact issue template and focused tests: the default greeting passes, while the requested `--uppercase` test deliberately starts red. Its one-page walkthrough owns the expected fixture outputs and optional disposable-repository journey; these are not an authenticated Graph transcript.
 
 For an optional real trial, commit the unchanged fixture to an authorized disposable private test repository and use its `ISSUE.md` as one bounded request. Do not enroll production repositories. Describe the expected behavior and finite validation; avoid a broad request such as “improve the whole product.”
 

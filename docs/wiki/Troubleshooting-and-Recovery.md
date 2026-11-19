@@ -31,5 +31,5 @@ not an empty queue; use `repo check` to diagnose access privately. No result gra
 permission or guarantees launch. The coordinator must independently verify current
 ownership, dependencies, worker source and authority. See the
 [Quickstart bounds](https://github.com/Vezryn-LLC/graph-community/blob/main/QUICKSTART.md)
-for caps and limitations. This feature is unreleased on main and absent from
+for caps and limitations. This feature belongs to the v0.1.2 payload and is absent from
 v0.1.1; use that tag's documentation for an installed v0.1.1 package.

@@ -45,8 +45,9 @@ authenticated terminal recording or proof of a particular delivery.
 ## Try it or help improve it
 
 Start with the Quickstart's [version choice, acquisition and fresh runtime copy](QUICKSTART.md#acquire-source-and-make-a-fresh-runtime-copy).
-v0.1.1 uses its tagged guide; doctor, queue and the exercise are currently unreleased.
-The [v0.1.2 candidate notes](RELEASE-NOTES-v0.1.2.md) describe accepted source
+v0.1.1 uses its tagged guide; doctor, queue and the exercise belong to newer source
+and the v0.1.2 payload. Check the release page for actual publication and assets.
+The [v0.1.2 release-source notes](RELEASE-NOTES-v0.1.2.md) describe accepted source
 changes, local reproduction and qualification limits; candidate preparation is not publication.
 For the pinned current-source path, try the [tiny local first-issue exercise](examples/first-issue/README.md),
 with an exact request and a deliberately missing behavior to implement.

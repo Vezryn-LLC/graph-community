@@ -38,11 +38,11 @@
     },
     "QUICKSTART.md": {
       "mode": "0o644",
-      "sha256": "8b03720326ce71eb54959cc2930c2445833ba312854c81c41aa3c12b28763a0a"
+      "sha256": "91e0cf39cc51e37345023bed5940f5989c6a3b26a56a2c167cf41840959717bc"
     },
     "README.md": {
       "mode": "0o644",
-      "sha256": "89bf710dffacfa56a60dc2d58b99fde628c5c0b13cce550e63d1727f32a8798f"
+      "sha256": "4375b4c949b3923755cc4dbc269781520f59a1d1e2e169406367b4494d23d0ca"
     },
     "RELEASE-NOTES-v0.1.0.md": {
       "mode": "0o644",
@@ -54,7 +54,7 @@
     },
     "RELEASE-NOTES-v0.1.2.md": {
       "mode": "0o644",
-      "sha256": "2562383a5065cb6c59e233996ec00312a9202347e38052882a91fee67cdfeaf6"
+      "sha256": "c69dedd41406860806fda6e81d6d52e32eb4e28f2593d2cb1bf987d4c3bd7d20"
     },
     "SECURITY.md": {
       "mode": "0o644",
@@ -146,7 +146,7 @@
     },
     "docs/wiki/First-Workflow.md": {
       "mode": "0o644",
-      "sha256": "e7543da55b735f8e1afe78cc7f984d531ebe0e757eaede5de75e30d937e88980"
+      "sha256": "241ece27098f75f5d53e708ee8399cae65e8ec67a72632b467b551d0282c2103"
     },
     "docs/wiki/Home.md": {
       "mode": "0o644",
@@ -158,7 +158,7 @@
     },
     "docs/wiki/Troubleshooting-and-Recovery.md": {
       "mode": "0o644",
-      "sha256": "31b3511a99ce1c96149f8e7d4975f6c2de9f4bf1387e92baf73587526839a7d9"
+      "sha256": "07dd48146dea6dc82664d36645dce739a07496404e01ac0d3227916d31365b25"
     },
     "docs/wiki/_Sidebar.md": {
       "mode": "0o644",
