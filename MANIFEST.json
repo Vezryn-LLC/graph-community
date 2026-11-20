@@ -38,7 +38,7 @@
     },
     "QUICKSTART.md": {
       "mode": "0o644",
-      "sha256": "91e0cf39cc51e37345023bed5940f5989c6a3b26a56a2c167cf41840959717bc"
+      "sha256": "1fdfc77e88489670b2180b9211f502995212c12824834671de45fbfad8f0351b"
     },
     "README.md": {
       "mode": "0o644",
@@ -118,7 +118,7 @@
     },
     "ci/test_repo_check.py": {
       "mode": "0o644",
-      "sha256": "b7d5e21148bcc9e7ad5a3e7abc9338e0e7f2c82687b5562e24288d6cb67e546d"
+      "sha256": "cf8488e4969069ba20b85a2bd6ec5e0de5f16a1a091a4030981fcd98eb7f0c36"
     },
     "ci/test_status.py": {
       "mode": "0o644",
@@ -362,7 +362,7 @@
     },
     "watcher.py": {
       "mode": "0o644",
-      "sha256": "ab838249f3179e841bdba01b5a20564d6f35a7c4b473c287eaf472f5abe003dc"
+      "sha256": "ff756aa731e304ebcf33073cb1633bf24e411632863911d7e0e6210fc26c2f87"
     }
   },
   "package": "graph-community",

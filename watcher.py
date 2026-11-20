@@ -182,6 +182,12 @@ def manage(action: str, repo: str | None) -> None:
 
 LIFECYCLE_LABELS = ('status:ready', 'status:in-progress', 'status:awaiting-merge', 'status:blocked')
 
+REPO_LIMITATIONS = {
+    'archived': 'Archived repositories are read-only and cannot host ordinary issue work; unarchive the repository in its settings or choose another maintained repository.',
+    'disabled': 'Disabled repositories cannot host ordinary issue work; restore the repository or choose another maintained repository.',
+    'issues_disabled': 'This repository has issues disabled and cannot host ordinary issue work; enable issues in repository settings or choose another maintained repository.',
+}
+
 
 def repo_read(endpoint):
     """Explicit GET through the existing gh integration; errors never escape raw."""
@@ -251,10 +257,18 @@ def repo_check_report(repository=None):
                            for label in LIFECYCLE_LABELS}
         if entry['metadata']['status'] != 'available' or status != 'available':
             entry['status'] = 'read_failed'
+        elif entry['metadata']['archived']:
+            entry['status'] = 'archived'
+        elif entry['metadata']['disabled']:
+            entry['status'] = 'disabled'
+        elif not entry['metadata']['has_issues']:
+            entry['status'] = 'issues_disabled'
         elif 'missing' in entry['labels'].values():
             entry['status'] = 'missing_labels'
         else:
             entry['status'] = 'configured_readable'
+        if entry['status'] in REPO_LIMITATIONS:
+            entry['guidance'] = REPO_LIMITATIONS[entry['status']]
         report['complete'] = report['complete'] and entry['status'] == 'configured_readable'
         report['repositories'].append(entry)
     return report
@@ -273,6 +287,8 @@ def print_repo_check(repository=None, as_json=False):
             print('No enrolled repositories; supply an explicit owner/name or deliberately enroll one')
         for entry in report['repositories']:
             print(f"{entry['repository']}: {entry['status']}")
+            if 'guidance' in entry:
+                print('  ' + entry['guidance'])
             print('  Metadata: ' + json.dumps(entry['metadata']))
             print('  Label read: ' + entry['label_read']['status'])
             for label, status in entry['labels'].items():

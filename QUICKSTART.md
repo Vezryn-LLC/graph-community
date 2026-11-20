@@ -315,11 +315,15 @@ python3 -B watcher.py repo check --json  # enrolled repositories only
 
 This is an authenticated network read through `gh`, separate from accounts-free
 `doctor`. An explicit target need not be enrolled and the check never enrolls it.
-Metadata and label reads report separately: missing labels differ from unknown
-labels after access denial, rate limiting, unavailable reads or the 1000-label
-read cap. GitHub can hide inaccessible repositories behind 404; that result cannot
-distinguish absence from denied access. Exit status is 1 for read failures or
-missing labels, 0 for configured readable targets (or no enrolled targets).
+Metadata, label and repository-condition reads report separately: an available
+metadata read is never the same as issue-work suitability, and missing labels
+differ from unknown labels after access denial, rate limiting, unavailable reads
+or the 1000-label read cap. An archived, disabled or issues-disabled repository
+reports that condition and a practical next step even when all four labels are
+present. GitHub can hide inaccessible repositories behind 404; that result cannot
+distinguish absence from denied access. Exit status is 1 for read failures,
+missing labels or a repository that cannot host ordinary issue work, 0 for
+configured readable targets (or no enrolled targets).
 Only permission booleans actually returned by GitHub are shown; omitted rights
 remain unknown. Read success does not grant write/merge authority or establish
 issue eligibility. Check `gh auth status` and repository access privately after
