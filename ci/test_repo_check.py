@@ -38,6 +38,27 @@ class RepoCheckTests(unittest.TestCase):
         self.assertEqual(report['repositories'][0]['labels']['status:blocked'], 'missing')
         self.assertFalse(report['complete'])
 
+    def test_repository_limitations_are_specific(self):
+        cases = [
+            (META | {'archived': True}, 'archived'),
+            (META | {'disabled': True}, 'disabled'),
+            (META | {'has_issues': False}, 'issues_disabled'),
+            (META | {'archived': True, 'disabled': True, 'has_issues': False}, 'archived'),
+        ]
+        for meta, expected in cases:
+            report, _ = self.report([meta, LABELS])
+            self.assertFalse(report['complete'])
+            entry = report['repositories'][0]
+            self.assertEqual(entry['status'], expected)
+            self.assertEqual(entry['metadata']['status'], 'available')
+            self.assertEqual(set(entry['labels'].values()), {'present'})
+            self.assertEqual(entry['guidance'], watcher.REPO_LIMITATIONS[expected])
+        report, _ = self.report([META, LABELS])
+        entry = report['repositories'][0]
+        self.assertEqual(entry['status'], 'configured_readable')
+        self.assertNotIn('guidance', entry)
+        self.assertTrue(report['complete'])
+
     def test_failures_are_separate_and_sanitized(self):
         for failure, status in [
             (subprocess.CalledProcessError(1, ['secret'], stderr='token-secret HTTP 403'), 'access_denied'),
@@ -105,6 +126,38 @@ class RepoCheckTests(unittest.TestCase):
                 self.assertIn('configured_readable', result.stdout)
                 self.assertNotIn(folder, result.stdout + result.stderr)
             self.assertEqual({p.name: (p.read_bytes(), p.stat().st_mtime_ns) for p in home.iterdir()}, before)
+
+    @unittest.skipIf(os.name == 'nt', 'Synthetic POSIX executable, not native qualification')
+    def test_cli_limited_repository_exits_nonzero(self):
+        for meta, status in [(META | {'archived': True}, 'archived'),
+                             (META | {'disabled': True}, 'disabled'),
+                             (META | {'has_issues': False}, 'issues_disabled')]:
+            with tempfile.TemporaryDirectory(prefix='repo check limited ') as folder:
+                home = Path(folder)
+                gh = home / 'gh'
+                gh.write_text('#!' + sys.executable + '\nimport json, sys\n'
+                              'assert sys.argv[1:4] == ["api", "--method", "GET"]\n'
+                              'endpoint = sys.argv[4]\n'
+                              'assert endpoint in ["repos/example/project", "repos/example/project/labels?per_page=100&page=1"]\n'
+                              'print(json.dumps(' + repr(meta) + ' if endpoint == "repos/example/project" else ' + repr(LABELS) + '))\n')
+                gh.chmod(0o755)
+                env = dict(HOME=folder, PATH=folder, VEZRYN_GRAPH_CONFIG=str(home / 'repos.toml'),
+                           VEZRYN_GRAPH_STATE=str(home / 'state'), PYTHONDONTWRITEBYTECODE='1')
+                for args in (['example/project'], ['example/project', '--json']):
+                    result = subprocess.run([sys.executable, '-B', str(ROOT / 'watcher.py'), 'repo', 'check', *args],
+                                            env=env, capture_output=True, text=True, timeout=10)
+                    self.assertEqual(result.returncode, 1, result.stderr)
+                    if '--json' not in args:
+                        self.assertIn(f'example/project: {status}', result.stdout)
+                        self.assertIn(watcher.REPO_LIMITATIONS[status], result.stdout)
+                    else:
+                        payload = json.loads(result.stdout)
+                        entry = payload['repositories'][0]
+                        self.assertEqual(entry['status'], status)
+                        self.assertEqual(entry['metadata']['status'], 'available')
+                        self.assertEqual(entry['guidance'], watcher.REPO_LIMITATIONS[status])
+                        self.assertFalse(payload['complete'])
+                    self.assertNotIn(folder, result.stdout + result.stderr)
 
 
 if __name__ == '__main__':
